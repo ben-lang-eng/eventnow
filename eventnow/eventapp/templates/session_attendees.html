@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Attendees — {{ session.title }} — EventNow{% endblock %}
+
+{% block content %}
+<section class="py-5 bg-white border-bottom">
+    <div class="container">
+        <p class="text-uppercase small fw-semibold text-muted mb-2">
+            <a href="{% url 'event_detail' session.event.pk %}" class="link-dark text-decoration-none">
+                <i class="bi bi-arrow-left me-1"></i>{{ session.event.title }}
+            </a>
+        </p>
+        <h1 class="display-6 fw-semibold text-dark mb-3">Attendees: {{ session.title }}</h1>
+        <div class="row g-3">
+            <div class="col-12 col-md-4">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <div class="small text-muted">Confirmed</div>
+                        <div class="h4 fw-semibold mb-0">{{ confirmed_count }} / {{ session.max_capacity }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <div class="small text-muted">Checked in</div>
+                        <div class="h4 fw-semibold mb-0">{{ checked_in_count }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-md-4">
+                <div class="card border-0 bg-light">
+                    <div class="card-body">
+                        <div class="small text-muted">Spots left</div>
+                        <div class="h4 fw-semibold mb-0">{{ spots_left }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+        {% if registrations %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Registered</th>
+                            <th>Checked in</th>
+                            <th class="text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reg in registrations %}
+                            {% with attendee=reg.event_registration.attendee %}
+                                <tr>
+                                    <td>{{ attendee.first_name }} {{ attendee.last_name }}</td>
+                                    <td><a href="mailto:{{ attendee.email }}" class="link-dark text-decoration-none">{{ attendee.email }}</a></td>
+                                    <td>
+                                        {% if reg.registration_status == "confirmed" %}
+                                            <span class="badge bg-success">Confirmed</span>
+                                        {% elif reg.registration_status == "waitlisted" %}
+                                            <span class="badge bg-warning text-dark">Waitlisted</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ reg.get_registration_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small class="text-muted">{{ reg.registered_at|date:"j M, g:i a" }}</small></td>
+                                    <td>
+                                        {% if reg.checked_in_at %}
+                                            <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                            <small class="text-muted">{{ reg.checked_in_at|date:"g:i a" }}</small>
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-end">
+                                        <form method="post" action="{% url 'session_check_in' session.pk reg.pk %}" class="d-inline">
+                                            {% csrf_token %}
+                                            {% if reg.checked_in_at %}
+                                                <button class="btn btn-sm btn-outline-secondary">Undo</button>
+                                            {% else %}
+                                                <button class="btn btn-sm btn-dark text-white">
+                                                    <i class="bi bi-check2 me-1"></i>Check in
+                                                </button>
+                                            {% endif %}
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endwith %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+            <p class="text-center text-muted">No registrations yet for this session.</p>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

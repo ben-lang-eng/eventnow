@@ -1,0 +1,17 @@
+{% load socialaccount %}
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4 p-md-5 text-center">
+        <p class="text-dark mb-4">
+            Attendees sign in with Google so we can verify your email address
+            for event registrations.
+        </p>
+        <a href="{% provider_login_url 'google' %}"
+           class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 mb-3">
+            <i class="bi bi-google"></i>
+            <span>Continue with Google</span>
+        </a>
+        <p class="small text-muted mb-0">
+            No account needed — Google handles the sign-in.
+        </p>
+    </div>
+</div>

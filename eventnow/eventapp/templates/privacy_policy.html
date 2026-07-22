@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Privacy Policy &mdash; EventNow{% endblock %}
+
+{% block content %}
+    <section class="py-5 bg-white border-bottom">
+        <div class="container">
+            <h1 class="display-6 fw-semibold text-dark mb-2">Privacy Policy</h1>
+            <p class="text-muted mb-0">Last updated: 4 May 2026</p>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-12 col-lg-3 mb-4 mb-lg-0">
+                    <nav aria-label="On this page" class="sticky-lg-top" style="top: 1rem;">
+                        <h2 class="h6 text-uppercase text-muted">On this page</h2>
+                        <ul class="list-unstyled small">
+                            <li class="mb-1"><a href="#about" class="text-decoration-none">1. About this policy</a></li>
+                            <li class="mb-1"><a href="#information-collected" class="text-decoration-none">2. Information we collect</a></li>
+                            <li class="mb-1"><a href="#how-we-use" class="text-decoration-none">3. How we use it</a></li>
+                            <li class="mb-1"><a href="#disclosure" class="text-decoration-none">4. Disclosure</a></li>
+                            <li class="mb-1"><a href="#storage" class="text-decoration-none">5. Storage and security</a></li>
+                            <li class="mb-1"><a href="#cookies" class="text-decoration-none">6. Cookies</a></li>
+                            <li class="mb-1"><a href="#access" class="text-decoration-none">7. Access and correction</a></li>
+                            <li class="mb-1"><a href="#complaints" class="text-decoration-none">8. Complaints</a></li>
+                            <li class="mb-1"><a href="#changes" class="text-decoration-none">9. Changes to this policy</a></li>
+                            <li class="mb-1"><a href="#contact" class="text-decoration-none">10. Contact us</a></li>
+                        </ul>
+                    </nav>
+                </div>
+
+                <div class="col-12 col-lg-9">
+                    <article class="bg-white p-4 p-md-5 rounded shadow-sm">
+
+                        <section id="about" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">1. About this policy</h2>
+                            <p>EventNow ("we", "us", "our") provides a multi-tenant event-management platform that lets organisations create, publish and run events online. This Privacy Policy explains what personal information we collect, how we use and protect it, and the choices you have.</p>
+                            <p class="mb-0">We handle personal information in accordance with the <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles (APPs). This policy is a student project and is provided for assessment purposes; it is not a legally binding policy of an operating business.</p>
+                        </section>
+
+                        <section id="information-collected" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">2. Information we collect</h2>
+                            <p>We collect only the information needed to operate the platform.</p>
+
+                            <h3 class="h6 text-dark">Account information</h3>
+                            <ul>
+                                <li>First name, last name, username, email address and phone number.</li>
+                                <li>If you sign in with Google, the basic profile information Google returns (name, email, profile picture).</li>
+                                <li>An encrypted password hash if you create a password-based account.</li>
+                            </ul>
+
+                            <h3 class="h6 text-dark">Event and registration information</h3>
+                            <ul>
+                                <li>Events you create or organise, including title, description, date, location (address and approximate latitude/longitude), cost and capacity.</li>
+                                <li>Sessions you speak at and registrations you make as an attendee, including check-in times.</li>
+                            </ul>
+
+                            <h3 class="h6 text-dark">Tenant information</h3>
+                            <ul>
+                                <li>If you administer an organisation on EventNow, we collect the organisation name, contact email and subscription plan.</li>
+                            </ul>
+
+                            <h3 class="h6 text-dark">Audit and technical information</h3>
+                            <ul class="mb-0">
+                                <li>Audit logs of significant actions taken in your account (for example, creating or archiving an event).</li>
+                                <li>Standard server logs, including IP address, browser type and pages visited, used to keep the service secure and reliable.</li>
+                            </ul>
+                        </section>
+
+                        <section id="how-we-use" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">3. How we use your information</h2>
+                            <ul class="mb-0">
+                                <li>To create and manage your account and authenticate you when you sign in.</li>
+                                <li>To publish events on behalf of organisers and let attendees register and check in.</li>
+                                <li>To show organisers dashboards of registrations and session capacity.</li>
+                                <li>To send transactional emails such as registration confirmations and event reminders.</li>
+                                <li>To keep the service secure, detect abuse, and meet our legal and audit obligations.</li>
+                            </ul>
+                        </section>
+
+                        <section id="disclosure" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">4. Disclosure of your information</h2>
+                            <p>We do not sell your personal information. We disclose it only when:</p>
+                            <ul class="mb-0">
+                                <li>You register for an event &mdash; the event organiser sees your name, email and registration status.</li>
+                                <li>Required by law, court order or a legitimate request from a regulator.</li>
+                                <li>To trusted service providers who help us run EventNow, including cloud hosting (UQ Cloud) and identity providers (Google sign-in). These providers may only use the information to deliver their service to us.</li>
+                            </ul>
+                        </section>
+
+                        <section id="storage" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">5. Storage and security</h2>
+                            <p>Personal information is stored in a MySQL database hosted on UQ Cloud. We protect your information by:</p>
+                            <ul class="mb-0">
+                                <li>Serving the application over HTTPS.</li>
+                                <li>Hashing passwords with Django's built-in password hasher; we never store passwords in plain text.</li>
+                                <li>Scoping every database query by tenant so that one organisation cannot read another organisation's data.</li>
+                                <li>Restricting administrative access to authorised staff only.</li>
+                                <li>Keeping audit logs of sensitive actions.</li>
+                            </ul>
+                        </section>
+
+                        <section id="cookies" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">6. Cookies</h2>
+                            <p class="mb-0">EventNow uses a small number of cookies that are strictly necessary to run the service: a session cookie that keeps you signed in, and a CSRF cookie that protects forms from cross-site request forgery. We do not use third-party advertising or tracking cookies.</p>
+                        </section>
+
+                        <section id="access" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">7. Access and correction</h2>
+                            <p class="mb-0">You can view and update most of your personal information from your account settings. If you would like a copy of all the information we hold about you, or you would like to correct or delete it, contact us using the details below. We will respond within a reasonable period.</p>
+                        </section>
+
+                        <section id="complaints" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">8. Complaints</h2>
+                            <p>If you believe we have breached the Australian Privacy Principles or mishandled your personal information, please contact us first using the details below and we will try to resolve the issue.</p>
+                            <p class="mb-0">If you are not satisfied with our response, you can lodge a complaint with the Office of the Australian Information Commissioner at <a href="https://www.oaic.gov.au/" target="_blank" rel="noopener">oaic.gov.au</a>.</p>
+                        </section>
+
+                        <section id="changes" class="mb-5">
+                            <h2 class="h4 text-dark mb-3">9. Changes to this policy</h2>
+                            <p class="mb-0">We may update this policy from time to time. The "Last updated" date at the top of this page shows when it was last revised. If we make significant changes we will notify account holders by email.</p>
+                        </section>
+
+                        <section id="contact" class="mb-0">
+                            <h2 class="h4 text-dark mb-3">10. Contact us</h2>
+                            <address class="mb-0">
+                                <strong>EventNow Privacy Officer</strong><br>
+                                Email: <a href="mailto:privacy@eventnow.example">privacy@eventnow.example</a>
+                            </address>
+                        </section>
+
+                    </article>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

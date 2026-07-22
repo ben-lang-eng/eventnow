@@ -1,0 +1,27 @@
+{% if error %}
+    <div class="alert alert-warning small mb-0 mt-3" role="alert">
+        <i class="bi bi-exclamation-triangle me-1"></i>{{ error }}
+    </div>
+{% elif polished %}
+    <div class="card border-0 bg-light mt-3">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center mb-2">
+                <i class="bi bi-stars text-warning me-2"></i>
+                <strong class="text-dark me-2">AI-polished draft</strong>
+                <span class="badge bg-secondary">Llama 3.3 · Groq</span>
+                <div class="ms-auto d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary"
+                            onclick="document.getElementById('ai-polish-result').innerHTML='';">
+                        Dismiss
+                    </button>
+                    <button type="button" class="btn btn-sm btn-dark text-white"
+                            onclick="document.getElementById('id_description').value = this.dataset.text; document.getElementById('id_description').dispatchEvent(new Event('input'));"
+                            data-text="{{ polished }}">
+                        <i class="bi bi-check2 me-1"></i>Use this
+                    </button>
+                </div>
+            </div>
+            <div class="text-dark small" style="white-space: pre-line;">{{ polished }}</div>
+        </div>
+    </div>
+{% endif %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+{% block title %}Sign In &mdash; EventNow{% endblock %}
+{% block nav_signin %}active{% endblock %}
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-10 col-lg-8 col-xl-7">
+                    <div class="text-center mb-4">
+                        <h1 class="display-6 fw-semibold text-dark mb-2">Sign In</h1>
+                        <p class="text-dark mb-0">
+                            New here?
+                            <a href="{% url 'account_signup' %}" class="link-dark fw-semibold">Create an account</a>.
+                        </p>
+                    </div>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 p-md-5">
+                            <a href="{% provider_login_url 'google' %}"
+                               class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 mb-3">
+                                <i class="bi bi-google"></i>
+                                <span>Continue with Google</span>
+                            </a>
+                            <div class="d-flex align-items-center my-4">
+                                <hr class="flex-grow-1">
+                                <span class="px-3 small text-muted">OR</span>
+                                <hr class="flex-grow-1">
+                            </div>
+                            <form method="post" action="{% url 'account_login' %}" novalidate>
+                                {% csrf_token %}
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+                                {% endif %}
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">
+                                        Email <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        <input type="email"
+                                               name="login"
+                                               id="id_login"
+                                               class="form-control"
+                                               required
+                                               {% if form.login.value %}value="{{ form.login.value }}"{% endif %}>
+                                    </div>
+                                    {% if form.login.errors %}<div class="invalid-feedback d-block">{{ form.login.errors|join:" " }}</div>{% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">
+                                        Password <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                        <input type="password"
+                                               name="password"
+                                               id="id_password"
+                                               class="form-control"
+                                               required>
+                                    </div>
+                                    {% if form.password.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.password.errors|join:" " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input type="checkbox"
+                                           name="remember"
+                                           id="id_remember"
+                                           class="form-check-input">
+                                    <label for="id_remember" class="form-check-label">Remember me</label>
+                                </div>
+                                {% if redirect_field_value %}
+                                    <input type="hidden"
+                                           name="{{ redirect_field_name }}"
+                                           value="{{ redirect_field_value }}">
+                                {% endif %}
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-dark text-white">
+                                        <i class="bi bi-box-arrow-in-right me-1"></i>Sign in
+                                    </button>
+                                </div>
+                                <div class="text-center mt-3">
+                                    <a href="{% url 'account_reset_password' %}" class="link-dark small">Forgot your password?</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

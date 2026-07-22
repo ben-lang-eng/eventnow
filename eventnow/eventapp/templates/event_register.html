@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Register for {{ event.title }} &mdash; EventNow{% endblock %}
+
+{% block content %}
+    <section class="py-5 bg-white border-bottom">
+        <div class="container text-center">
+            <p class="text-uppercase small fw-semibold text-muted mb-2">Event Registration</p>
+            <h1 class="display-6 fw-semibold text-dark mb-2">Register for {{ event.title }}</h1>
+            <p class="text-dark mb-0">
+                <i class="bi bi-calendar-event me-1"></i>
+                {{ event.start_time|date:"l j F Y, g:i a" }}
+                {% if event.city %}<span class="ms-3"><i class="bi bi-geo-alt me-1"></i>{{ event.city }}</span>{% endif %}
+            </p>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-7 col-xl-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 p-md-5">
+                            {% if user.is_authenticated %}
+                                <h2 class="h4 fw-semibold text-dark mb-3">Confirm your details</h2>
+                                <p class="text-dark mb-4">
+                                    Signed in as <strong>{{ user.email }}</strong>. Confirm your details below to register.
+                                    The event will be added to your calendar immediately.
+                                </p>
+                            {% else %}
+                                <h2 class="h4 fw-semibold text-dark mb-3">Your details</h2>
+                                <p class="text-dark mb-4">
+                                    We&rsquo;ll email you a sign-in link so you can manage your registration
+                                    and see this event in your calendar.
+                                </p>
+                            {% endif %}
+
+                            <form method="post" novalidate>
+                                {% csrf_token %}
+
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+                                {% endif %}
+
+                                <div class="row g-3">
+                                    {% for field in form %}
+                                        <div class="col-12 {% if field.name == 'first_name' or field.name == 'last_name' %}col-md-6{% endif %}">
+                                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">
+                                                {{ field.label }}
+                                                {% if field.field.required %}<span class="text-danger" aria-hidden="true">*</span>{% endif %}
+                                            </label>
+                                            {{ field }}
+                                            {% if field.help_text %}
+                                                <div class="form-text">{{ field.help_text }}</div>
+                                            {% endif %}
+                                            {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|join:" " }}</div>{% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+
+                                <div class="d-flex justify-content-between gap-2 mt-4">
+                                    <a href="{% url 'event_detail' event.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                                    <button type="submit" class="btn btn-dark text-white">
+                                        <i class="bi bi-check2-circle me-1"></i> Register
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

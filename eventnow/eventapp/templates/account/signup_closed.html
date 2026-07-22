@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% load socialaccount %}
+
+{% block title %}Sign up &mdash; EventNow{% endblock %}
+
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 p-md-5 text-center">
+                            <h1 class="h3 fw-semibold text-dark mb-3">Sign up with Google</h1>
+                            <p class="text-dark mb-4">
+                                Password signup is closed &mdash; attendees sign in with
+                                Google so we can verify email ownership.
+                            </p>
+                            <a href="{% provider_login_url 'google' %}"
+                               class="btn btn-light border w-100 d-flex align-items-center justify-content-center gap-2 mb-3">
+                                <i class="bi bi-google"></i>
+                                <span>Continue with Google</span>
+                            </a>
+                            <p class="small text-muted mb-0">
+                                Are you an organiser?
+                                <a href="{% url 'organiser_signup' %}" class="link-dark">Create a workspace</a>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}
+  {{ event.title }} &mdash; EventNow
+{% endblock %}
+{% block nav_events %}
+  active
+{% endblock %}
+{% block content %}
+  <section class="py-5 bg-white border-bottom">
+    <div class="container">
+      <div class="row align-items-center g-4">
+        <div class="col-12 col-lg-7 order-2 order-lg-1">
+          <div class="d-flex align-items-center gap-3 flex-wrap mb-3">
+            <h1 class="display-5 fw-semibold text-dark mb-0">{{ event.title }}</h1>
+            {% if attendee_registration %}
+              <span class="badge bg-success fs-6"><i class="bi bi-check-circle me-1"></i>Registered</span>
+            {% endif %}
+          </div>
+          <p class="lead text-dark mb-4">{{ event.description|linebreaks }}</p>
+          <div class="small text-dark">
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-person-badge-fill me-2"></i>
+              <span>By: {{ event.organiser.user.get_full_name|default:event.organiser.tenant.name }}</span>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-geo-alt-fill me-2"></i>
+              <span>
+                {{ event.address }}
+                {% if event.city %}
+                  , {{ event.city }}
+                {% endif %}
+              </span>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-calendar-event me-2"></i>
+              <span>{{ event.start_time|date:'l j F Y' }}</span>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-cash-coin me-2"></i>
+              <span>
+                {% if event.cost %}
+                  ${{ event.cost }}
+                {% else %}
+                  Free Event
+                {% endif %}
+              </span>
+            </div>
+            <div class="d-flex align-items-center mb-2">
+              <i class="bi bi-people-fill me-2"></i>
+              <span>{{ event_confirmed }} / {{ event.max_attendees }} registered &middot; {{ event_spots_left }} spots left</span>
+            </div>
+          </div>
+          {% if event.latitude and event.longitude %}
+            <div class="card border-0 shadow-sm mt-4">
+              <div class="ratio ratio-16x9 rounded overflow-hidden">
+                <iframe src="https://maps.google.com/maps?q={{ event.latitude }},{{ event.longitude }}&z=16&output=embed" style="border:0" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map showing location of {{ event.title }}" allowfullscreen></iframe>
+              </div>
+            </div>
+          {% elif event.address %}
+            <div class="card border-0 shadow-sm mt-4">
+              <div class="ratio ratio-16x9 rounded overflow-hidden">
+                <iframe src="https://maps.google.com/maps?q={{ event.location_query|urlencode }}&output=embed"
+                  style="border:0"
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade"
+                  title="Map showing location of {{ event.title }}"
+                  allowfullscreen></iframe>
+              </div>
+            </div>
+          {% endif %}
+          {% if user.is_authenticated and user.profile.tenant_id == event.tenant_id %}
+            <div class="mt-4 d-flex gap-2">
+              <a href="{% url 'event_edit' event.pk %}" class="btn btn-outline-dark"><i class="bi bi-pencil"></i> Edit</a>
+              <form method="post" action="{% url 'event_archive' event.pk %}" onsubmit="return confirm('Archive this event?');" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-warning"><i class="bi bi-archive"></i> Archive</button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+        <div class="col-12 col-lg-5 order-1 order-lg-2">
+          {% if event.banner_image %}
+            <img src="{{ event.banner_image.url }}" alt="{{ event.banner_image_alt|default:event.title }}" class="img-fluid rounded shadow-sm mb-4" />
+          {% endif %}
+          {# Event capacity — Google Charts doughnut #}
+          <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <h2 class="h5 fw-semibold text-dark mb-3">Event capacity</h2>
+              <div class="row align-items-center g-3">
+                <div class="col-auto">
+                  <div id="eventCapacityChart" data-confirmed="{{ event_confirmed }}" data-capacity="{{ event.max_attendees }}" style="width: 150px;
+                                                height: 150px" role="img" aria-label="Event capacity: {{ event_confirmed }} of {{ event.max_attendees }} registered"></div>
+                </div>
+                <div class="col">
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="d-inline-block me-2" style="width:12px;
+                                                     height:12px;
+                                                     background:#198754;
+                                                     border-radius:2px"></span>
+                    <span class="small">Registered</span>
+                    <span class="ms-auto fw-semibold">{{ event_confirmed }}</span>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="d-inline-block me-2" style="width:12px;
+                                                     height:12px;
+                                                     background:#e9ecef;
+                                                     border:1px solid #ced4da;
+                                                     border-radius:2px"></span>
+                    <span class="small">Spots left</span>
+                    <span class="ms-auto fw-semibold">{{ event_spots_left }}</span>
+                  </div>
+                  <hr class="my-2" />
+                  <div class="d-flex align-items-center">
+                    <span class="small text-muted">Capacity</span>
+                    <span class="ms-auto fw-semibold">{{ event.max_attendees }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="py-5">
+    <div class="container">
+      <div class="card border-0 shadow-sm mb-4 bg-light">
+        <div class="card-body p-4 p-md-5">
+          <div class="row align-items-center g-3">
+            <div class="col-12 col-md">
+              {% if attendee_registration %}
+                <h2 class="h4 fw-semibold text-dark mb-1">You're registered for this event</h2>
+                <p class="text-dark mb-0">This event is in your personal calendar.</p>
+              {% else %}
+                <h2 class="h4 fw-semibold text-dark mb-1">Register for this event</h2>
+                <p class="text-dark mb-0">Sign in and register to add this event to your personal calendar.</p>
+              {% endif %}
+            </div>
+            <div class="col-12 col-md-auto d-grid">
+              {% if attendee_registration %}
+                <form method="post" action="{% url 'event_unregister' event.pk %}" onsubmit="return confirm('Unregister from this event? This also cancels your session bookings for it.');">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i> Unregister</button>
+                </form>
+              {% else %}
+                <a href="{% url 'event_register' event.pk %}" class="btn btn-dark text-white"><i class="bi bi-pencil-square me-1"></i> Register</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <div>
+          <h2 class="fw-semibold text-dark mb-1">Sessions</h2>
+          <p class="text-dark mb-0">Choose a session and register your place.</p>
+        </div>
+        {% if user.is_authenticated and user.profile.tenant_id == event.tenant_id %}
+          <a href="{% url 'session_create' event.pk %}" class="btn btn-outline-dark"><i class="bi bi-plus-lg"></i> Add session</a>
+        {% endif %}
+      </div>
+      <div class="row g-4">
+        {% for session in sessions %}
+          <div class="col-12">
+            <div class="card border-0 shadow-sm h-100 {% if session.status == 'cancelled' %}opacity-50{% endif %}">
+              <div class="row g-0">
+                <div class="{% if session.image %}
+                    col-md-8
+                  {% else %}
+                    col-12
+                  {% endif %}">
+                  <div class="card-body p-4">
+                    <h3 class="h4 text-dark mb-3">
+                      {{ session.title }}
+                      {% if session.status == 'cancelled' %}
+                        <span class="badge bg-warning text-dark ms-2">Cancelled</span>
+                      {% endif %}
+                      {% if session.pk in registered_session_ids %}
+                        <span class="badge bg-success ms-2"><i class="bi bi-check-circle me-1"></i>Registered</span>
+                      {% endif %}
+                    </h3>
+                    <div class="small text-dark mb-3">
+                      <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-clock-fill me-2"></i>
+                        <span>{{ session.start_time|date:'j M Y, g:i a' }} – {{ session.end_time|date:'g:i a' }}</span>
+                      </div>
+                      <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-people-fill me-2"></i>
+                        <span>{{ session.confirmed_count }} / {{ session.max_capacity }} registered</span>
+                      </div>
+                      {% if session.room_name %}
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-door-open-fill me-2"></i>
+                          <span>Room: {{ session.room_name }}</span>
+                        </div>
+                      {% endif %}
+                    </div>
+                    <p class="text-dark mb-2 desc-clamped" id="sess-desc-{{ session.pk }}">{{ session.description|linebreaksbr }}</p>
+                    {% if session.description|wordcount > 25 %}
+                      <button type="button" class="btn btn-sm btn-link p-0 link-dark text-decoration-none mb-3" onclick=" const el = document.getElementById('sess-desc-{{ session.pk }}'); el.classList.toggle('desc-clamped'); this.textContent = el.classList.contains('desc-clamped') ? 'Read more ↓' : 'Read less ↑'; ">Read more ↓</button>
+                    {% endif %}
+                    <div class="d-flex gap-2 flex-wrap">
+                      <a href="{% url 'session_detail' session.pk %}" class="btn btn-dark text-white px-4">View session</a>
+                      {% if user.is_authenticated and user.profile and user.profile.tenant == session.event.tenant %}
+                        <a href="{% url 'session_attendees' session.pk %}" class="btn btn-outline-secondary"><i class="bi bi-people me-1"></i>View attendees</a>
+                      {% endif %}
+                      {% if user.is_authenticated and user.profile.tenant_id == event.tenant_id %}
+                        <a href="{% url 'session_edit' session.pk %}" class="btn btn-outline-dark"><i class="bi bi-pencil"></i> Edit</a>
+                        {% if session.status != 'cancelled' %}
+                          <form method="post" action="{% url 'session_archive' session.pk %}" onsubmit="return confirm('Cancel this session?');" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-warning"><i class="bi bi-x-circle"></i> Cancel</button>
+                          </form>
+                        {% endif %}
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                {% if session.image %}
+                  <div class="col-md-4">
+                    <img src="{{ session.image.url }}" alt="{{ session.image_alt|default:session.title }}" class="img-fluid h-100 w-100 rounded-end" style="object-fit: cover" />
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-12">
+            <p class="text-center text-dark">No sessions scheduled for this event yet.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    google.charts.load('current', { packages: ['corechart'] })
+    google.charts.setOnLoadCallback(drawEventCapacityChart)
+    
+    function drawEventCapacityChart() {
+      const el = document.getElementById('eventCapacityChart')
+      if (!el) return
+      const confirmed = parseInt(el.dataset.confirmed, 10)
+      const capacity = parseInt(el.dataset.capacity, 10)
+      const remaining = Math.max(capacity - confirmed, 0)
+    
+      const data = google.visualization.arrayToDataTable([
+        ['Status', 'Count'],
+        ['Registered', confirmed],
+        ['Spots left', remaining]
+      ])
+    
+      const options = {
+        pieHole: 0.55,
+        colors: ['#198754', '#e9ecef'],
+        legend: { position: 'none' },
+        pieSliceText: 'none',
+        chartArea: { width: '95%', height: '95%' },
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'focus' }
+      }
+    
+      const chart = new google.visualization.PieChart(el)
+      chart.draw(data, options)
+      window.addEventListener('resize', () => chart.draw(data, options))
+    }
+  </script>
+{% endblock %}

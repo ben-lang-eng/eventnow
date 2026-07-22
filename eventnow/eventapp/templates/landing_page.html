@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}EventNow &mdash; Create and manage events effortlessly{% endblock %}
+
+{% block nav_home %}active{% endblock %}
+
+{% block content %}
+    <section class="py-5 bg-white border-bottom">
+        <div class="container">
+            <div class="row align-items-center g-4">
+                <div class="col-12 col-lg-6 text-center text-lg-start order-2 order-lg-1">
+                    <h1 class="display-5 fw-semibold text-dark mb-3">
+                        Create and manage events effortlessly
+                    </h1>
+                    <p class="lead text-dark mb-4">
+                        EventNow simplifies the process of creating, promoting, and scheduling events.
+                    </p>
+                    <div class="d-grid d-sm-block">
+                        <a href="{% url 'signup_choose' %}" class="btn btn-dark btn-lg px-4 text-white">Get Started</a>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6 text-center order-1 order-lg-2">
+                    <img src="{% static 'img/EventNow_logo_cropped.png' %}" alt="EventNow Logo" class="img-fluid rounded shadow-sm">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="py-5">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-semibold text-dark mb-2">Key Features</h2>
+                <p class="text-dark mb-0">
+                    Everything needed to organise and manage successful events.
+                </p>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body d-flex flex-column p-4">
+                            <div class="mb-3 fs-2 text-eventnow-accent">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <h3 class="h5 card-title text-dark mb-2">Real-Time Attendance Tracking</h3>
+                            <p class="card-text text-dark mb-0">
+                                Monitor registrations and session capacity in real time so organisers can respond
+                                quickly to demand.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body d-flex flex-column p-4">
+                            <div class="mb-3 fs-2 text-eventnow-accent">
+                                <i class="bi bi-layout-text-window-reverse"></i>
+                            </div>
+                            <h3 class="h5 card-title text-dark mb-2">Easy-to-Use Interface</h3>
+                            <p class="card-text text-dark mb-0">
+                                A simple, intuitive interface makes it easy to create events, manage sessions, and
+                                keep everything organised.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-xl-4">
+                    <div class="card h-100 shadow-sm border-0">
+                        <div class="card-body d-flex flex-column p-4">
+                            <div class="mb-3 fs-2 text-eventnow-accent">
+                                <i class="bi bi-image-fill"></i>
+                            </div>
+                            <h3 class="h5 card-title text-dark mb-2">Image and Multimedia Uploads</h3>
+                            <p class="card-text text-dark mb-0">
+                                Upload promotional images and media to make events more appealing and informative
+                                for potential attendees.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

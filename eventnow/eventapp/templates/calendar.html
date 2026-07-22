@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Calendar &mdash; EventNow{% endblock %}
+{% block nav_calendar %}active{% endblock %}
+{% block extra_head %}
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+    <style>
+        #calendar { max-width: 1100px; margin: 0 auto; }
+        .fc .fc-button-primary {
+            background-color: #1e293b;
+            border-color: #1e293b;
+        }
+        .fc .fc-button-primary:hover,
+        .fc .fc-button-primary:not(:disabled).fc-button-active {
+            background-color: #334155;
+            border-color: #334155;
+        }
+        .fc-event { cursor: pointer; }
+    </style>
+{% endblock %}
+{% block content %}
+    <section class="py-5 bg-white border-bottom">
+        <div class="container">
+            <h1 class="display-6 fw-semibold text-dark mb-2">Event Calendar</h1>
+            <p class="lead text-dark mb-0">All published events across EventNow. Click any event to view details and register.</p>
+        </div>
+    </section>
+    <section class="py-5">
+        <div class="container">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-3 p-md-4">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,listWeek'
+                },
+                events: '{% url "event_calendar_json" %}',
+                eventClick: function (info) {
+                    if (info.event.url) {
+                        info.jsEvent.preventDefault();
+                        window.location.href = info.event.url;
+                    }
+                },
+                height: 'auto',
+                nowIndicator: true,
+                navLinks: true,
+                dayMaxEvents: 3
+            });
+            calendar.render();
+        });
+    </script>
+{% endblock %}

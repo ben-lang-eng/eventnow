@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ page_title|default:"Create Event" }} &mdash; EventNow{% endblock %}
+{% block nav_events %}active{% endblock %}
+{% block content %}
+    <section class="py-5 bg-white border-bottom">
+        <div class="container">
+            <p class="text-uppercase small fw-semibold text-muted mb-2">Event Creator</p>
+            <div class="row align-items-start g-4">
+                <div class="col-12 col-lg-8">
+                    <h1 class="display-6 fw-semibold text-dark mb-3">{{ page_title|default:"Create a new event" }}</h1>
+                    <p class="lead text-dark mb-0">
+                        Set up your event details, add a description, choose a location, and upload a banner image.
+                        You can add sessions from the event page once it&rsquo;s created.
+                    </p>
+                </div>
+                <div class="col-12 col-lg-4">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body small">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-calendar-event-fill me-2"></i>
+                                <span>Create event details</span>
+                            </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="bi bi-image me-2"></i>
+                                <span>Upload a banner image</span>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-people me-2"></i>
+                                <span>Open registrations for attendees</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section class="py-5">
+        <div class="container">
+            <form method="post" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+                <div class="alert alert-light border d-flex align-items-center gap-3 mb-4"
+                     role="region"
+                     aria-label="AI assistant">
+                    <i class="bi bi-stars text-warning fs-4"></i>
+                    <div class="flex-grow-1 small">
+                        <strong>Need help writing?</strong>
+                        Draft a rough description below, then click <em>Polish with AI</em> to rewrite it as marketing copy.
+                    </div>
+                    <button type="button"
+                            class="btn btn-dark text-white btn-sm"
+                            hx-post="{% url 'polish_description' %}"
+                            hx-include="[name='title'], [name='description'], [name='csrfmiddlewaretoken']"
+                            hx-target="#ai-polish-result"
+                            hx-swap="innerHTML"
+                            hx-indicator="#ai-polish-spinner"
+                            hx-disabled-elt="this">
+                        <span id="ai-polish-spinner" class="htmx-indicator">
+                            <span class="spinner-border spinner-border-sm me-1"
+                                  role="status"
+                                  aria-hidden="true"></span>
+                        </span>
+                        <i class="bi bi-magic me-1"></i>Polish with AI
+                    </button>
+                </div>
+                <div id="ai-polish-result"></div>
+                <div class="card border-0 shadow-sm mb-4">
+                    <div class="card-body p-4 p-md-5">
+                        <h2 class="h4 fw-semibold text-dark mb-4">Event Details</h2>
+                        <div class="row g-3">
+                            {# Title — full width #}
+                            <div class="col-12">
+                                <label for="{{ form.title.id_for_label }}" class="form-label fw-semibold">
+                                    Event Title <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.title }}
+                                {% if form.title.errors %}<div class="invalid-feedback d-block">{{ form.title.errors|join:" " }}</div>{% endif %}
+                            </div>
+                            {# Description — full width textarea #}
+                            <div class="col-12">
+                                <label for="{{ form.description.id_for_label }}"
+                                       class="form-label fw-semibold">Description</label>
+                                {{ form.description }}
+                                {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.description.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            {# Cost + Max attendees — 50/50 #}
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.cost.id_for_label }}" class="form-label fw-semibold">Cost</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.cost }}
+                                </div>
+                                <div class="form-text">Leave at 0.00 for a free event.</div>
+                                {% if form.cost.errors %}<div class="invalid-feedback d-block">{{ form.cost.errors|join:" " }}</div>{% endif %}
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.max_attendees.id_for_label }}"
+                                       class="form-label fw-semibold">
+                                    Maximum Attendees <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.max_attendees }}
+                                {% if form.max_attendees.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.max_attendees.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            {# Start time + End time — 50/50 #}
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.start_time.id_for_label }}"
+                                       class="form-label fw-semibold">
+                                    Start Date &amp; Time <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.start_time }}
+                                {% if form.start_time.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.start_time.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.end_time.id_for_label }}" class="form-label fw-semibold">
+                                    End Date &amp; Time <span class="text-danger" aria-hidden="true">*</span>
+                                </label>
+                                {{ form.end_time }}
+                                {% if form.end_time.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.end_time.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            {# Address — full width #}
+                            <div class="col-12">
+                                <label for="{{ form.address.id_for_label }}" class="form-label fw-semibold">Address</label>
+                                {{ form.address }}
+                                {% if form.address.errors %}<div class="invalid-feedback d-block">{{ form.address.errors|join:" " }}</div>{% endif %}
+                            </div>
+                            {# City — full width #}
+                            <div class="col-12">
+                                <label for="{{ form.city.id_for_label }}" class="form-label fw-semibold">City</label>
+                                {{ form.city }}
+                                {% if form.city.errors %}<div class="invalid-feedback d-block">{{ form.city.errors|join:" " }}</div>{% endif %}
+                            </div>
+                            {# State + Postcode + Country — 3 cols #}
+                            <div class="col-12 col-md-4">
+                                <label for="{{ form.state.id_for_label }}" class="form-label fw-semibold">State</label>
+                                {{ form.state }}
+                                {% if form.state.errors %}<div class="invalid-feedback d-block">{{ form.state.errors|join:" " }}</div>{% endif %}
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="{{ form.postcode.id_for_label }}" class="form-label fw-semibold">Postcode</label>
+                                {{ form.postcode }}
+                                {% if form.postcode.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.postcode.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label for="{{ form.country.id_for_label }}" class="form-label fw-semibold">Country</label>
+                                {{ form.country }}
+                                {% if form.country.errors %}<div class="invalid-feedback d-block">{{ form.country.errors|join:" " }}</div>{% endif %}
+                            </div>
+                            {# Lat + Long — 50/50 #}
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.latitude.id_for_label }}" class="form-label fw-semibold">Latitude</label>
+                                {{ form.latitude }}
+                                {% if form.latitude.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.latitude.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.longitude.id_for_label }}"
+                                       class="form-label fw-semibold">Longitude</label>
+                                {{ form.longitude }}
+                                {% if form.longitude.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.longitude.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            {# Banner Image — full width #}
+                            <div class="col-12">
+                                <label for="{{ form.banner_image.id_for_label }}"
+                                       class="form-label fw-semibold">Banner Image</label>
+                                {{ form.banner_image }}
+                                <div class="form-text">Shown at the top of your event page. JPG or PNG, up to 50 MB.</div>
+                                {% if form.banner_image.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.banner_image.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            {# Banner image alt text — full width #}
+                            <div class="col-12">
+                                <label for="{{ form.banner_image_alt.id_for_label }}"
+                                       class="form-label fw-semibold">Image Description (Alt Text)</label>
+                                {{ form.banner_image_alt }}
+                                <div class="form-text">Helps screen readers describe the image for visually impaired users.</div>
+                                {% if form.banner_image_alt.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.banner_image_alt.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                            {# Status + slug — 50/50 #}
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.status.id_for_label }}" class="form-label fw-semibold">Status</label>
+                                {{ form.status }}
+                                {% if form.status.errors %}<div class="invalid-feedback d-block">{{ form.status.errors|join:" " }}</div>{% endif %}
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <label for="{{ form.event_website_slug.id_for_label }}"
+                                       class="form-label fw-semibold">Event URL slug</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">eventnow/event/</span>
+                                    {{ form.event_website_slug }}
+                                </div>
+                                <div class="form-text">Lowercase letters, numbers and dashes.</div>
+                                {% if form.event_website_slug.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.event_website_slug.errors|join:" " }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex flex-column flex-md-row justify-content-md-end gap-2 mt-4">
+                    <a href="{% url 'events' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit"
+                            name="action"
+                            value="draft"
+                            class="btn btn-outline-dark">Save Draft</button>
+                    <button type="submit"
+                            name="action"
+                            value="publish"
+                            class="btn btn-dark text-white">
+                        <i class="bi bi-check2-circle me-1"></i>{{ button_text|default:"Create Event" }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+{% endblock %}

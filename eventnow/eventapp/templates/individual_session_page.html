@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ session.title }} — {{ session.event.title }} — EventNow{% endblock %}
+{% block nav_events %}active{% endblock %}
+{% block content %}
+    <section class="py-5 bg-white border-bottom">
+        <div class="container">
+            <p class="text-uppercase small fw-semibold text-muted mb-2">
+                <a href="{% url 'event_detail' session.event.pk %}"
+                   class="link-dark text-decoration-none">
+                    <i class="bi bi-arrow-left me-1"></i>{{ session.event.title }}
+                </a>
+            </p>
+            <div class="d-flex align-items-start gap-3 flex-wrap">
+                <h1 class="display-6 fw-semibold text-dark mb-0">{{ session.title }}</h1>
+                {% if session.status == "scheduled" %}
+                    <span class="badge bg-success">Scheduled</span>
+                {% elif session.status == "ongoing" %}
+                    <span class="badge bg-primary">Ongoing</span>
+                {% elif session.status == "completed" %}
+                    <span class="badge bg-secondary">Completed</span>
+                {% elif session.status == "cancelled" %}
+                    <span class="badge bg-danger">Cancelled</span>
+                {% endif %}
+                {% if attendee_session_registration %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-check-circle me-1"></i>
+                        {% if attendee_session_registration.registration_status == 'waitlisted' %}
+                            Waitlisted
+                        {% else %}
+                            Registered
+                        {% endif %}
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-dark mt-3 mb-0">
+                <i class="bi bi-calendar-event me-1"></i>
+                {{ session.start_time|date:"l j F Y, g:i a" }} – {{ session.end_time|date:"g:i a" }}
+                {% if session.room_name %}
+                    <span class="ms-3"><i class="bi bi-geo-alt me-1"></i>{{ session.room_name }}</span>
+                {% endif %}
+            </p>
+            {% if user.is_authenticated and user.profile.tenant == session.event.tenant %}
+                <div class="mt-3 d-flex gap-2 flex-wrap">
+                    <a href="{% url 'session_edit' session.pk %}"
+                       class="btn btn-sm btn-outline-dark">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                    <form method="post"
+                          action="{% url 'session_archive' session.pk %}"
+                          class="d-inline">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-x-circle me-1"></i>Cancel session
+                        </button>
+                    </form>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+    <section class="py-5">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-12 col-lg-8">
+                    {% if session.description %}
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body p-4">
+                                <h2 class="h5 fw-semibold text-dark mb-3">Description</h2>
+                                <p class="text-dark mb-0">{{ session.description|linebreaksbr }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                    {# Capacity widget — Google Charts doughnut #}
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <h2 class="h5 mb-3">Session capacity</h2>
+                            <div class="row align-items-center g-3 mb-3">
+                                <div class="col-12 col-sm-auto">
+                                    <div id="capacityChart"
+                                         data-confirmed="{{ confirmed_count }}"
+                                         data-capacity="{{ session.max_capacity }}"
+                                         style="width: 180px;
+                                                height: 180px"
+                                         role="img"
+                                         aria-label="Session capacity: {{ confirmed_count }} of {{ session.max_capacity }} confirmed">
+                                    </div>
+                                </div>
+                                <div class="col">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="d-inline-block me-2"
+                                              style="width:12px;
+                                                     height:12px;
+                                                     background:#198754;
+                                                     border-radius:2px"></span>
+                                        <span class="small">Confirmed</span>
+                                        <span class="ms-auto fw-semibold">{{ confirmed_count }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="d-inline-block me-2"
+                                              style="width:12px;
+                                                     height:12px;
+                                                     background:#e9ecef;
+                                                     border:1px solid #ced4da;
+                                                     border-radius:2px"></span>
+                                        <span class="small">Spots left</span>
+                                        <span class="ms-auto fw-semibold">{{ spots_left }}</span>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="d-flex align-items-center">
+                                        <span class="small text-muted">Capacity</span>
+                                        <span class="ms-auto fw-semibold">{{ session.max_capacity }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% if request.session.attendee_id %}
+                                    {% if attendee_session_registration %}
+                                        <form method="post"
+                                              action="{% url 'session_unregister' session.pk %}"
+                                              onsubmit="return confirm('Unregister from this session?');">
+                                            {% csrf_token %}
+                                            <button class="btn btn-outline-danger">
+                                                <i class="bi bi-x-circle me-1"></i>
+                                                {% if attendee_session_registration.registration_status == 'waitlisted' %}
+                                                    Leave waitlist
+                                                {% else %}
+                                                    Unregister from this session
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <form method="post" action="{% url 'session_register' session.pk %}">
+                                            {% csrf_token %}
+                                            <button class="btn btn-dark text-white">
+                                                <i class="bi bi-pencil-square me-1"></i>
+                                                {% if confirmed_count >= session.max_capacity %}
+                                                    Join waitlist
+                                                {% else %}
+                                                    Register for this session
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                {% else %}
+                                    <p class="small text-muted mb-0">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        <a href="{% url 'event_register' session.event.pk %}" class="link-dark">Register for the event</a>
+                                        first, then sign in to book sessions.
+                                    </p>
+                                {% endif %}
+                                {% if user.is_authenticated and user.profile.tenant == session.event.tenant %}
+                                    <a href="{% url 'session_attendees' session.pk %}"
+                                       class="btn btn-outline-secondary">
+                                        <i class="bi bi-people me-1"></i>View attendees
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% if session.speakers.all %}
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body p-4">
+                                <h2 class="h5 fw-semibold text-dark mb-3">Speakers</h2>
+                                <div class="row g-3">
+                                    {% for sp in session.speakers.all %}
+                                        <div class="col-12 col-md-6">
+                                            <div class="p-3 bg-light rounded h-100">
+                                                <div class="fw-semibold">{{ sp.display_name }}</div>
+                                                {% if sp.bio %}<p class="small text-muted mt-2 mb-0">{{ sp.bio|truncatewords:30 }}</p>{% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                <aside class="col-12 col-lg-4">
+                    {% if session.image %}
+                        <div class="card border-0 shadow-sm mb-4">
+                            <img src="{{ session.image.url }}"
+                                 alt="{{ session.image_alt|default:session.title }}"
+                                 class="card-img-top rounded">
+                        </div>
+                    {% endif %}
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <h2 class="h6 text-uppercase text-muted mb-3">Other sessions in this event</h2>
+                            {% with siblings=session.event.sessions.all %}
+                                {% if siblings|length > 1 %}
+                                    <ul class="list-unstyled mb-0">
+                                        {% for other in siblings %}
+                                            {% if other.pk != session.pk %}
+                                                <li class="mb-3">
+                                                    <a href="{% url 'session_detail' other.pk %}"
+                                                       class="link-dark text-decoration-none fw-semibold">
+                                                        {{ other.title }}
+                                                    </a>
+                                                    <div class="small text-muted">{{ other.start_time|date:"j M, g:i a" }}</div>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="small text-muted mb-0">This is the only session.</p>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    </section>
+{% endblock %}
+{% block extra_scripts %}
+    <script src="https://www.gstatic.com/charts/loader.js"></script>
+    <script>
+    google.charts.load('current', {packages: ['corechart']});
+    google.charts.setOnLoadCallback(drawCapacityChart);
+
+    function drawCapacityChart() {
+        const el = document.getElementById('capacityChart');
+        if (!el) return;
+        const confirmed = parseInt(el.dataset.confirmed, 10);
+        const capacity = parseInt(el.dataset.capacity, 10);
+        const remaining = Math.max(capacity - confirmed, 0);
+
+        const data = google.visualization.arrayToDataTable([
+            ['Status', 'Count'],
+            ['Confirmed', confirmed],
+            ['Spots left', remaining]
+        ]);
+
+        const options = {
+            pieHole: 0.55,
+            colors: ['#198754', '#e9ecef'],
+            legend: { position: 'none' },
+            pieSliceText: 'none',
+            chartArea: { width: '95%', height: '95%' },
+            backgroundColor: 'transparent',
+            tooltip: { trigger: 'focus' }
+        };
+
+        const chart = new google.visualization.PieChart(el);
+        chart.draw(data, options);
+
+        window.addEventListener('resize', () => chart.draw(data, options));
+    }
+    </script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Organiser Sign Up &mdash; EventNow{% endblock %}
+{% block nav_signup %}active{% endblock %}
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-10 col-lg-7 col-xl-6">
+                    <div class="text-center mb-2">
+                        <a href="{% url 'signup_choose' %}"
+                           class="text-uppercase small fw-semibold text-muted text-decoration-none">
+                            <i class="bi bi-arrow-left me-1"></i>Back to sign up
+                        </a>
+                    </div>
+                    <div class="text-center mb-4">
+                        <h1 class="display-6 fw-semibold text-dark mb-2">Sign Up</h1>
+                        <p class="text-dark mb-0">Set up your organiser workspace to start running events.</p>
+                    </div>
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 p-md-5">
+                            <form method="post" novalidate>
+                                {% csrf_token %}
+                                {% if form.non_field_errors %}
+                                    <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+                                {% endif %}
+                                {# Workspace section #}
+                                <div class="mb-4">
+                                    <label for="{{ form.workspace_name.id_for_label }}"
+                                           class="form-label fw-semibold">
+                                        Workspace name <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                        {{ form.workspace_name }}
+                                    </div>
+                                    {% if form.workspace_name.help_text %}<div class="form-text">{{ form.workspace_name.help_text }}</div>{% endif %}
+                                    {% if form.workspace_name.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.workspace_name.errors|join:" " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="mb-4">
+                                    <label for="{{ form.workspace_slug.id_for_label }}"
+                                           class="form-label fw-semibold">
+                                        Workspace URL <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+                                        <span class="input-group-text">eventnow/</span>
+                                        {{ form.workspace_slug }}
+                                    </div>
+                                    {% if form.workspace_slug.help_text %}<div class="form-text">{{ form.workspace_slug.help_text }}</div>{% endif %}
+                                    {% if form.workspace_slug.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.workspace_slug.errors|join:" " }}</div>
+                                    {% endif %}
+                                </div>
+                                <hr class="my-4">
+                                {# Personal details #}
+                                <div class="row g-3 mb-3">
+                                    <div class="col-12 col-md-6">
+                                        <label for="{{ form.first_name.id_for_label }}"
+                                               class="form-label fw-semibold">
+                                            First name <span class="text-danger" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            {{ form.first_name }}
+                                        </div>
+                                        {% if form.first_name.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.first_name.errors|join:" " }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <label for="{{ form.last_name.id_for_label }}"
+                                               class="form-label fw-semibold">
+                                            Last name <span class="text-danger" aria-hidden="true">*</span>
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                            {{ form.last_name }}
+                                        </div>
+                                        {% if form.last_name.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.last_name.errors|join:" " }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+                                        Email address <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                        {{ form.email }}
+                                    </div>
+                                    {% if form.email.errors %}<div class="invalid-feedback d-block">{{ form.email.errors|join:" " }}</div>{% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="{{ form.password.id_for_label }}" class="form-label fw-semibold">
+                                        Password <span class="text-danger" aria-hidden="true">*</span>
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                        {{ form.password }}
+                                    </div>
+                                    {% if form.password.help_text %}<div class="form-text">{{ form.password.help_text }}</div>{% endif %}
+                                    {% if form.password.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.password.errors|join:" " }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="form-check mb-4">
+                                    <input class="form-check-input" type="checkbox" id="terms_agree" required>
+                                    <label class="form-check-label small" for="terms_agree">
+                                        I agree to the <a href="{% url 'terms' %}" class="link-dark">Terms of Service</a>
+                                        and <a href="{% url 'privacy' %}" class="link-dark">Privacy Policy</a>.
+                                    </label>
+                                </div>
+                                <div class="d-grid mb-3">
+                                    <button type="submit" class="btn btn-dark text-white btn-lg">
+                                        <i class="bi bi-building-add me-1"></i>Create Account
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <p class="text-center text-dark mt-4 mb-0">
+                        Already have an account?
+                        <a href="{% url 'account_login' %}" class="link-dark fw-semibold">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,0 +1,132 @@
+# EventNow
+
+A multi-tenant event-management platform built as a university web-systems capstone (UQ INFS7202) and kept live afterwards as a portfolio piece.
+
+Organisers create and run events with scheduled sessions; attendees register, receive capacity-aware confirmations, and track upcoming events on a personal calendar.
+
+## Live demo
+
+**https://eventnow-kq6z.onrender.com/**
+
+> Hosted on Render's free tier, so the first request after inactivity takes ~50 s to spin the container back up. Subsequent requests are instant.
+
+### Organiser test accounts
+
+Sign in: https://eventnow-kq6z.onrender.com/accounts/login/
+
+| Tenant | Email | Password |
+|---|---|---|
+| UQ Goat Patters | `uqgoatpatters@proton.me` | `2LrcRm\|0<gT2` |
+| UQ Dog Patters | `uqdogpatters@proton.me` | `sx£78C\|v8%3O` |
+| UQ Random Events | `uqrandomevents@proton.me` | `8R9y*R\|M8£2g` |
+
+### Attendee test account
+
+Attendees sign in via **Google** — no password path. Use any Google account
+to try the attendee flow (registering for events, personal calendar).
+
+## What this project demonstrates
+
+- **Multi-tenant SaaS data model** — every query is scoped to the organiser's tenant; four independent enforcement points (models, views, forms, ownership stamping) mean cross-tenant reads/writes fail even if one layer is misused.
+- **Soft-delete pattern** — no destructive deletes; records transition through status flags, keeping history for audit and undo.
+- **HTMX for progressive enhancement** — the AI-polish button, dynamic signup form, and speaker management update inline without a full page reload and without hand-rolled JavaScript.
+- **Provider-agnostic LLM integration** — the "Polish with AI" feature talks to an OpenAI-compatible endpoint; swapping providers is a base-URL and API-key change, no client code touched.
+- **Accessibility built in, not bolted on** — WCAG 2.1 AA contrast, keyboard navigable, skip-links, semantic landmarks.
+
+## Tech stack
+
+| Layer | Tech |
+|---|---|
+| Framework | Django 6.0, Python 3.14 |
+| Database | PostgreSQL (Neon, pooled connection) |
+| App server | gunicorn |
+| Static files | WhiteNoise with finders fallback |
+| Media storage | Cloudinary (CDN + on-the-fly image optimisation) |
+| Frontend | Bootstrap 5.3, Bootstrap Icons, HTMX |
+| Auth | django-allauth (email + password, Google OAuth) |
+| LLM | LangChain against Groq's `llama-3.3-70b-versatile` |
+| Charts / calendar | FullCalendar, Google Charts |
+| Hosting | Render (Singapore region, free tier) |
+
+## Key features
+
+- **Event & session CRUD** — full lifecycle including soft delete via status
+- **Google OAuth** for organisers and attendees, plus password auth
+- **Role-differentiated signup** — attendee vs. organiser flows swapped via HTMX
+- **Personal attendee calendar** + a public calendar (FullCalendar reads a JSON feed exposed by the API)
+- **Session capacity tracking** with check-in; doughnut chart for utilisation
+- **Google Maps embeds** on event pages
+- **"Polish with AI"** — rewrites rough event/session descriptions into marketing copy in one click (LangChain + Groq, HTMX partial update)
+- **Django admin** with custom soft-delete actions for tenant management
+- **WCAG 2.1 AA** contrast across authored content
+
+## AI Usage Statement
+
+**In the app.** The "Polish with AI" feature (rubric item 5.1) sends an organiser's rough event or session description to a large language model via LangChain — currently Groq's `llama-3.3-70b-versatile` through Groq's OpenAI-compatible endpoint — and returns polished marketing copy. The provider is configured via the `LLM_API_KEY` env var and a `base_url` in `ai.py`, so it can be swapped for OpenAI, OpenRouter, or another compatible provider without touching any other code.
+
+**In development.** Anthropic's Claude (via Claude Code) was used as a coding assistant during development for scaffolding views/models/forms, debugging deployment issues (Google OAuth, CSRF, database connections), generating Bootstrap markup, and writing code documentation. All architectural decisions were my own.
+
+## Running locally
+
+Requires Python 3.12+.
+
+```
+python -m venv venv
+# Windows: .\venv\Scripts\Activate.ps1
+source venv/bin/activate
+pip install -r requirements.txt
+
+cd eventnow
+python manage.py migrate
+python manage.py runserver
+```
+
+Then browse to http://127.0.0.1:8000/.
+
+Minimum `.env` inside `eventnow/` for local dev (SQLite fallback, no cloud services):
+
+```
+SECRET_KEY=any-random-string-for-dev
+DEBUG=True
+LLM_API_KEY=your-groq-or-openai-key
+```
+
+For the full production experience locally, also set `DATABASE_URL`, `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`.
+
+## Deployment
+
+Hosted on **Render** with a Neon Postgres pooled endpoint and Cloudinary for uploaded media.
+
+- **Build command:** `pip install -r ../requirements.txt && python manage.py collectstatic --no-input && python manage.py migrate`
+- **Start command:** `gunicorn eventnow.wsgi:application`
+- **Root directory:** `eventnow`
+- **HTTPS termination** happens at Render's load balancer; `SECURE_PROXY_SSL_HEADER` picks up the forwarded scheme.
+
+Static files are served by WhiteNoise middleware with `WHITENOISE_USE_FINDERS = True` so the app is resilient to a build that skips `collectstatic`. User uploads route through Cloudinary because Render's free tier has no persistent disk.
+
+## References
+
+**Legislation cited** in the Privacy Policy and Terms of Service:
+
+- *Privacy Act 1988* (Cth) — Privacy Policy §1; Terms of Service §§8–9 (APP-based handling of personal information).
+- *Spam Act 2003* (Cth) — Terms of Service §5 (acceptable use).
+- *Competition and Consumer Act 2010* (Cth) — Terms of Service §§9–10 (ACL non-exclusion of consumer guarantees, disclaimers, liability).
+
+**Reference materials consulted:**
+
+- Business Victoria — *Privacy policy template* (structure of the Privacy Policy page).
+- Office of the Australian Information Commissioner — *Australian Privacy Principles guidelines*.
+- W3C Web Accessibility Initiative — *Accessibility Principles* (POUR baseline).
+- Django Software Foundation — *Security in Django* (settings hardening).
+- Google Developers — *Visualization: Pie Chart* (capacity doughnuts).
+
+## Image credits
+
+All event and session images come from open-licence sources:
+
+- [Pexels](https://www.pexels.com/) — Pexels licence (free to use, no attribution required).
+- [Wikimedia Commons](https://commons.wikimedia.org/) — Creative Commons or public-domain licences.
+
+## Author
+
+Benjamin Lang — [GitHub](https://github.com/ben-lang-eng)

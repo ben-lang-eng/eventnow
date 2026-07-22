@@ -1,0 +1,115 @@
+/* EventNow custom styles — WCAG AAA contrast overrides */
+body {
+    color: #1a1a1a;
+}
+
+a {
+    color: #0a4d8c;
+}
+
+a:hover {
+    color: #063a6b;
+}
+
+.text-muted {
+    color: #4a4a4a !important;
+}
+
+.form-text {
+    color: #4a4a4a;
+}
+
+/* Darker danger red — required-field asterisks + error text pass AAA */
+.text-danger {
+    color: #8b0000 !important;
+}
+
+.invalid-feedback {
+    color: #8b0000;
+}
+
+.desc-clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* FullCalendar AAA contrast overrides */
+.fc .fc-daygrid-day-number,
+.fc .fc-col-header-cell-cushion {
+    color: #1a1a1a;
+}
+
+.fc-day-other .fc-daygrid-day-number {
+    opacity: 1;
+    color: #595959;
+    /* faded other-month dates — still readable */
+}
+
+.fc .fc-button-primary {
+    background-color: #1e293b;
+    border-color: #1e293b;
+    color: #ffffff;
+}
+
+.fc .fc-button-primary:hover,
+.fc .fc-button-primary:not(:disabled):active,
+.fc .fc-button-primary:not(:disabled).fc-button-active {
+    background-color: #0f172a;
+    border-color: #0f172a;
+    color: #ffffff;
+}
+
+/* Navbar muted text (signed-in user name) — readable on dark navbar */
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Outline-secondary buttons (Cancel etc.) — darker text passes AAA */
+.btn-outline-secondary {
+    color: #3a3f44;
+    border-color: #6c757d;
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus {
+    color: #ffffff;
+}
+
+/* FullCalendar — kill the opacity fade on other-month days */
+.fc .fc-day-other .fc-daygrid-day-top {
+    opacity: 1 !important;
+}
+
+.fc .fc-day-other .fc-daygrid-day-number {
+    color: #595959 !important;
+}
+
+/* FullCalendar — all day numbers + column headers dark */
+.fc .fc-daygrid-day-number,
+.fc .fc-col-header-cell-cushion {
+    color: #1a1a1a !important;
+}
+
+/* FullCalendar — buttons forced to slate theme with white text */
+.fc .fc-button,
+.fc .fc-button-primary {
+    background-color: #1e293b !important;
+    border-color: #1e293b !important;
+    color: #ffffff !important;
+}
+
+.fc .fc-button-primary:disabled {
+    background-color: #475569 !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+}
+
+.fc .fc-button:disabled,
+.fc .fc-button-primary:disabled {
+    background-color: #475569 !important;
+    border-color: #475569 !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+}

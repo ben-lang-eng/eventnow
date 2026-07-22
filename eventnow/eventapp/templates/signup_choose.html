@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Sign Up &mdash; EventNow{% endblock %}
+{% block nav_signup %}active{% endblock %}
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-md-10 col-lg-8 col-xl-7">
+                    <div class="text-center mb-4">
+                        <h1 class="display-6 fw-semibold text-dark mb-2">Sign Up</h1>
+                        <p class="text-dark mb-0">Set up your account to start organising or attending events.</p>
+                        <p class="text-center text-dark mt-4 mb-0">
+                            Already have an account?
+                            <a href="{% url 'account_login' %}" class="link-dark fw-semibold">Sign in</a>
+                        </p>
+                    </div>
+                    <ul class="nav nav-pills justify-content-center mb-4"
+                        role="tablist"
+                        id="signup-roles">
+                        <li class="nav-item">
+                            <button type="button"
+                                    class="nav-link active text-white bg-dark me-2"
+                                    hx-get="{% url 'signup_form_fragment' 'attendee' %}"
+                                    hx-target="#signup-form"
+                                    hx-swap="innerHTML"
+                                    onclick="document.querySelectorAll('#signup-roles .nav-link').forEach(b => b.classList.remove('active','text-white','bg-dark')); this.classList.add('active','text-white','bg-dark');">
+                                <i class="bi bi-person me-1"></i>I&rsquo;m an attendee
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button type="button"
+                                    class="nav-link text-dark"
+                                    hx-get="{% url 'signup_form_fragment' 'organiser' %}"
+                                    hx-target="#signup-form"
+                                    hx-swap="innerHTML"
+                                    onclick="document.querySelectorAll('#signup-roles .nav-link').forEach(b => b.classList.remove('active','text-white','bg-dark')); this.classList.add('active','text-white','bg-dark');">
+                                <i class="bi bi-building me-1"></i>I&rsquo;m an organiser
+                            </button>
+                        </li>
+                    </ul>
+                    <div id="signup-form"
+                         hx-get="{% url 'signup_form_fragment' 'attendee' %}"
+                         hx-trigger="load"
+                         hx-swap="innerHTML">
+                        <div class="text-center text-muted py-5">
+                            <div class="spinner-border" role="status"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

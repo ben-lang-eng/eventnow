@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Upcoming Events &mdash; EventNow{% endblock %}
+{% block nav_events %}active{% endblock %}
+{% block extra_head %}{% endblock %}
+{% block content %}
+    <section class="py-5">
+        <div class="container">
+            <div class="row align-items-end mb-4 g-3">
+                <div class="col-12 col-md text-center text-md-start">
+                    <h1 class="display-6 fw-semibold text-dark mb-1">Upcoming Events</h1>
+                    <p class="text-dark mb-0">Discover popular events happening soon.</p>
+                </div>
+                {% if user.is_authenticated and user.profile and user.profile.tenant %}
+                    <div class="col-12 col-md-auto text-center text-md-end">
+                        <a href="{% url 'event_create' %}" class="btn btn-dark text-white">
+                            <i class="bi bi-plus-circle me-1"></i> Create Event
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            <form method="get" class="row justify-content-center mb-4">
+                <div class="col-12 col-md-8 col-lg-6">
+                    <div class="input-group">
+                        <input type="search"
+                               name="q"
+                               value="{{ query }}"
+                               class="form-control"
+                               placeholder="Search by title, description, or city…">
+                        <button type="submit" class="btn btn-dark text-white">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        {% if query %}
+                            <a href="{% url 'events' %}"
+                               class="btn btn-outline-dark"
+                               title="Clear search">
+                                <i class="bi bi-x-lg"></i> Clear
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+            <div class="row g-4">
+                {% for event in events %}
+                    <div class="col-12 col-md-6 col-xl-4">
+                        <div class="card h-100 shadow-sm border-0">
+                            <div class="card-body d-flex flex-column p-4">
+                                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                                    <h3 class="h4 card-title text-dark mb-0">
+                                        {{ event.title }}
+                                        {% if user.is_authenticated and user.profile.tenant_id == event.tenant_id %}
+                                            {% if event.status == "draft" %}
+                                                <span class="badge bg-secondary ms-1">Draft</span>
+                                            {% elif event.status == "archived" %}
+                                                <span class="badge bg-warning text-dark ms-1">Archived</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </h3>
+                                    {% if event.pk in registered_event_ids %}
+                                        <span class="badge bg-success flex-shrink-0">
+                                            <i class="bi bi-check-circle me-1"></i>Registered
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-text text-dark mb-2 desc-clamped"
+                                     id="desc-{{ event.pk }}">{{ event.description|linebreaks }}</div>
+                                {% if event.description|wordcount > 25 %}
+                                    <button type="button"
+                                            class="btn btn-sm btn-link p-0 link-dark text-decoration-none align-self-start mb-3"
+                                            onclick=" const el = document.getElementById('desc-{{ event.pk }}'); el.classList.toggle('desc-clamped'); this.textContent = el.classList.contains('desc-clamped') ? 'Read more ↓' : 'Read less ↑'; ">
+                                        Read more ↓
+                                    </button>
+                                {% endif %}
+                                {% if event.banner_image %}
+                                    <img src="{{ event.banner_image.url }}"
+                                         class="img-fluid rounded mb-3"
+                                         alt="{{ event.banner_image_alt|default:event.title }}">
+                                {% endif %}
+                                <div class="small text-dark mt-auto">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-geo-alt-fill me-2"></i>
+                                        <span>{{ event.city|default:"Location TBA" }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <i class="bi bi-calendar-event me-2"></i>
+                                        <span>{{ event.start_time|date:"l j F Y" }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-3">
+                                        <i class="bi bi-cash-coin me-2"></i>
+                                        <span>
+                                            {% if event.cost %}
+                                                ${{ event.cost }}
+                                            {% else %}
+                                                Free
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="d-grid">
+                                    <a href="{% url 'event_detail' event.pk %}"
+                                       class="btn btn-dark text-white">
+                                        {% if event.pk in registered_event_ids %}
+                                            View
+                                        {% else %}
+                                            View &amp; Register
+                                        {% endif %}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-light text-center" role="alert">
+                            <p class="mb-2 text-dark">
+                                No published events
+                                {% if query %}
+                                    match "<strong>{{ query }}</strong>"
+                                {% else %}
+                                    yet
+                                {% endif %}
+                                .
+                            </p>
+                            {% if query %}
+                                <a href="{% url 'events' %}" class="link-dark fw-semibold">Clear search</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            {% if is_paginated %}
+                <nav aria-label="Events pagination" class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}">Previous</a>
+                            </li>
+                        {% endif %}
+                        <li class="page-item active">
+                            <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                        </li>
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                   href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}">Next</a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

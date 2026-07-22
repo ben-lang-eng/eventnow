@@ -1,0 +1,23 @@
+{% if session.speakers.all %}
+    <ul class="list-group">
+        {% for sp in session.speakers.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="fw-semibold">{{ sp.display_name }}</div>
+                    {% if sp.bio %}<div class="small text-muted">{{ sp.bio }}</div>{% endif %}
+                </div>
+                <button type="button"
+                        class="btn btn-sm btn-link link-danger p-0"
+                        title="Remove speaker"
+                        hx-post="{% url 'speaker_delete' sp.pk %}"
+                        hx-target="#speaker-list"
+                        hx-swap="innerHTML"
+                        hx-confirm="Remove this speaker?">
+                    <i class="bi bi-x-circle"></i>
+                </button>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p class="small text-muted mb-0">No speakers added yet.</p>
+{% endif %}
