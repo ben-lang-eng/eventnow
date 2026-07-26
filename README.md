@@ -8,7 +8,7 @@ Organisers create and run events with scheduled sessions; attendees register, re
 
 **https://eventnow-kq6z.onrender.com/**
 
-> Hosted on Render's free tier, so the first request after inactivity takes ~50 s to spin the container back up. Subsequent requests are instant.
+> Hosted on Render's free tier with a cron-job.org keep-alive ping every 10 minutes, so requests are usually instant. Rare cold-start delays of ~50 s can still happen after outages or redeploys.
 
 ### Organiser test accounts
 
