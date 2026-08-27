@@ -28,7 +28,11 @@ def polish_event_description(rough_text: str, event_title: str = "") -> str:
     # provider (Groq, OpenRouter, Together, OpenAI itself) — just change
     # base_url and model name.
     llm = ChatOpenAI(
-        model="llama-3.3-70b-versatile",
+        # Groq moved llama-3.3-70b-versatile to their Enterprise tier
+        # (2026-08), so developer keys 404 on it. openai/gpt-oss-20b is
+        # the fastest free-tier model still available and is more than
+        # capable for paragraph rewriting.
+        model="openai/gpt-oss-20b",
         api_key=os.getenv("LLM_API_KEY"),
         base_url="https://api.groq.com/openai/v1",
     )

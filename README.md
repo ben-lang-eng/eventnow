@@ -44,7 +44,7 @@ to try the attendee flow (registering for events, personal calendar).
 | Media storage | Cloudinary (CDN + on-the-fly image optimisation) |
 | Frontend | Bootstrap 5.3, Bootstrap Icons, HTMX |
 | Auth | django-allauth (email + password, Google OAuth) |
-| LLM | LangChain against Groq's `llama-3.3-70b-versatile` |
+| LLM | LangChain against Groq's `openai/gpt-oss-20b` |
 | Charts / calendar | FullCalendar, Google Charts |
 | Hosting | Render (Singapore region, free tier) |
 
@@ -62,7 +62,7 @@ to try the attendee flow (registering for events, personal calendar).
 
 ## AI Usage Statement
 
-**In the app.** The "Polish with AI" feature (rubric item 5.1) sends an organiser's rough event or session description to a large language model via LangChain — currently Groq's `llama-3.3-70b-versatile` through Groq's OpenAI-compatible endpoint — and returns polished marketing copy. The provider is configured via the `LLM_API_KEY` env var and a `base_url` in `ai.py`, so it can be swapped for OpenAI, OpenRouter, or another compatible provider without touching any other code.
+**In the app.** The "Polish with AI" feature (rubric item 5.1) sends an organiser's rough event or session description to a large language model via LangChain — currently Groq's `openai/gpt-oss-20b` through Groq's OpenAI-compatible endpoint — and returns polished marketing copy. The provider is configured via the `LLM_API_KEY` env var and a `base_url` in `ai.py`, so it can be swapped for OpenAI, OpenRouter, or another compatible provider without touching any other code.
 
 **In development.** Anthropic's Claude (via Claude Code) was used as a coding assistant during development for scaffolding views/models/forms, debugging deployment issues (Google OAuth, CSRF, database connections), generating Bootstrap markup, and writing code documentation. All architectural decisions were my own.
 
