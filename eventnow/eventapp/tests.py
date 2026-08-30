@@ -3,6 +3,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.db.utils import OperationalError
 from django.test import TestCase
 from django.utils import timezone
 
@@ -337,3 +338,58 @@ class AdminSmokeTests(TestCase):
         response = self.client.get("/admin/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Site administration")
+
+
+class HealthEndpointTests(TestCase):
+    """The probes Grafana Synthetic Monitoring polls.
+
+    Both must work unauthenticated — the monitor has no session — and
+    /healthz/ must not touch the database, or the Neon compute budget goes
+    to health checks instead of users.
+    """
+
+    def test_healthz_is_public_and_ok(self):
+        with patch.dict("os.environ", {"LLM_API_KEY": "test-key"}):
+            response = self.client.get("/healthz/")
+        self.assertEqual(response.status_code, 200)
+        body = response.json()
+        self.assertEqual(body["status"], "ok")
+        self.assertEqual(body["checks"]["llm_config"], "ok")
+
+    def test_healthz_reports_degraded_without_api_key(self):
+        with patch.dict("os.environ", {}, clear=True):
+            response = self.client.get("/healthz/")
+        # Degraded, not down: the site serves fine with the AI button broken,
+        # so this must not page anyone via the HTTP status code.
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "degraded")
+
+    def test_healthz_runs_no_queries(self):
+        with patch.dict("os.environ", {"LLM_API_KEY": "test-key"}):
+            with self.assertNumQueries(0):
+                self.client.get("/healthz/")
+
+    def test_readyz_checks_the_database(self):
+        with patch.dict("os.environ", {"LLM_API_KEY": "test-key"}):
+            response = self.client.get("/readyz/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["checks"]["db"], "ok")
+
+    def test_readyz_returns_503_when_the_database_is_unreachable(self):
+        with patch("eventapp.health.connection") as fake_connection:
+            fake_connection.cursor.side_effect = OperationalError("down")
+            response = self.client.get("/readyz/")
+        self.assertEqual(response.status_code, 503)
+        body = response.json()
+        self.assertEqual(body["status"], "error")
+        self.assertEqual(body["checks"]["db"], "error: OperationalError")
+        # The driver's message can carry the database host and credentials;
+        # only the exception class name may reach a public endpoint.
+        self.assertNotIn("down", response.content.decode())
+
+    def test_probes_reject_post(self):
+        # 405 from @require_GET under the test client, which is CSRF-exempt;
+        # 403 from CsrfViewMiddleware in front of a real client, which gets
+        # there first. Either way the probes are read-only.
+        for url in ("/healthz/", "/readyz/"):
+            self.assertIn(self.client.post(url).status_code, (403, 405))

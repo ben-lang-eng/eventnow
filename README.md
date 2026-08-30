@@ -47,6 +47,7 @@ to try the attendee flow (registering for events, personal calendar).
 | LLM | LangChain against Groq's `openai/gpt-oss-20b` |
 | Charts / calendar | FullCalendar, Google Charts |
 | Hosting | Render (Singapore region, free tier) |
+| Observability | Grafana Cloud — synthetic monitoring, Prometheus, alerting |
 
 ## Key features
 
@@ -58,6 +59,7 @@ to try the attendee flow (registering for events, personal calendar).
 - **Google Maps embeds** on event pages
 - **"Polish with AI"** — rewrites rough event/session descriptions into marketing copy in one click (LangChain + Groq, HTMX partial update)
 - **Django admin** with custom soft-delete actions for tenant management
+- **Health probes and alerting** — `/healthz/` and `/readyz/` polled by Grafana Cloud; email alert on outage
 - **WCAG 2.1 AA** contrast across authored content
 
 ## AI Usage Statement
@@ -83,7 +85,8 @@ python manage.py runserver
 
 Then browse to http://127.0.0.1:8000/.
 
-Minimum `.env` inside `eventnow/` for local dev (SQLite fallback, no cloud services):
+Copy `.env.example` to `.env` in the repository root and fill it in. The
+minimum for local dev (SQLite fallback, no cloud services) is:
 
 ```
 SECRET_KEY=any-random-string-for-dev
@@ -103,6 +106,34 @@ Hosted on **Render** with a Neon Postgres pooled endpoint and Cloudinary for upl
 - **HTTPS termination** happens at Render's load balancer; `SECURE_PROXY_SSL_HEADER` picks up the forwarded scheme.
 
 Static files are served by WhiteNoise middleware with `WHITENOISE_USE_FINDERS = True` so the app is resilient to a build that skips `collectstatic`. User uploads route through Cloudinary because Render's free tier has no persistent disk.
+
+## Monitoring
+
+The live deployment is watched from outside by [Grafana Cloud](https://grafana.com/products/cloud/) synthetic monitoring, with email alerting on outage. Full runbook, dashboard queries and the free-tier arithmetic behind the design: [`monitoring/README.md`](monitoring/README.md).
+
+The app exposes two probes, split along the Kubernetes liveness/readiness line:
+
+| Endpoint | Checks | Poll interval | Cost |
+|---|---|---|---|
+| `/healthz/` | process up, credentials present | 2 min | no I/O at all |
+| `/readyz/` | the above plus `SELECT 1` | 30 min | wakes the Neon compute |
+
+The split is a budget decision. Neon's free tier suspends Postgres after ~5 minutes idle and bills compute hours, so a probe running `SELECT 1` every minute would hold the database awake around the clock and spend roughly twice the monthly allowance on health checks alone.
+
+Neither probe ever calls the LLM — that would cost money and rate limit on every execution. The config check asserts the credentials are present and reports which model the app would ask for:
+
+```json
+{
+  "status": "ok",
+  "checks": { "db": "ok", "llm_config": "ok" },
+  "version": "1743d71",
+  "llm_model": "openai/gpt-oss-20b"
+}
+```
+
+`status` distinguishes `ok` from `degraded` (misconfigured, but still serving) and `error` (a hard dependency is unreachable, HTTP 503). The synthetic check asserts on the response body as well as the status code, because the incident that prompted this work — a provider retiring the configured model — left the site returning a perfectly healthy 200 on every page.
+
+*Planned (V2): OpenTelemetry instrumentation pushing RED metrics and per-request `polish_requests_total` / `polish_latency_seconds` to the same stack.*
 
 ## References
 

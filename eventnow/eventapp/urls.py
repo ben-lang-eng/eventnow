@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import health, views
 
 urlpatterns = [
     path("", views.index, name="index"),
@@ -33,6 +33,9 @@ urlpatterns = [
     path("session/<int:pk>/unregister/", views.session_unregister, name="session_unregister"),
     # Calendar
     path("calendar/", views.calendar, name="calendar"),
+    # Operational probes (polled by Grafana Synthetic Monitoring)
+    path("healthz/", health.healthz, name="healthz"),
+    path("readyz/", health.readyz, name="readyz"),
     # Static legal pages
     path("privacy/", views.privacy, name="privacy"),
     path("terms/", views.terms, name="terms"),

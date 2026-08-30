@@ -27,14 +27,16 @@ def polish_event_description(rough_text: str, event_title: str = "") -> str:
     # API key is read from LLM_API_KEY. Works with any OpenAI-compatible
     # provider (Groq, OpenRouter, Together, OpenAI itself) — just change
     # base_url and model name.
+    # The model name is an env var, not a literal, because of the 2026-08
+    # incident: Groq moved llama-3.3-70b-versatile to their Enterprise tier
+    # and every developer key started 404-ing. Fixing that meant a code
+    # change and a redeploy; as an env var the next such move is a dashboard
+    # edit and a restart. openai/gpt-oss-20b is the default — the fastest
+    # free-tier model still available, and ample for paragraph rewriting.
     llm = ChatOpenAI(
-        # Groq moved llama-3.3-70b-versatile to their Enterprise tier
-        # (2026-08), so developer keys 404 on it. openai/gpt-oss-20b is
-        # the fastest free-tier model still available and is more than
-        # capable for paragraph rewriting.
-        model="openai/gpt-oss-20b",
+        model=os.getenv("LLM_MODEL", "openai/gpt-oss-20b"),
         api_key=os.getenv("LLM_API_KEY"),
-        base_url="https://api.groq.com/openai/v1",
+        base_url=os.getenv("LLM_BASE_URL", "https://api.groq.com/openai/v1"),
     )
 
     # System message sets the copywriter persona + constraints;
