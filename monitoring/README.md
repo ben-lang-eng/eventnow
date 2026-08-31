@@ -96,8 +96,8 @@ minimum compute size for your Neon project in the console — if it is above
 ### Render free tier
 
 Free web services spin down after 15 minutes of inactivity. A 2-minute liveness
-probe keeps the service warm, which makes the existing cron-job.org keep-alive
-ping redundant — it can be retired once V1 is live.
+probe keeps the service warm, which made the old cron-job.org keep-alive ping
+redundant — retired 31 Aug 2026, once V1 was live.
 
 Worth naming the smell: the monitor then becomes load-bearing. If Grafana's
 synthetic monitoring has an outage, EventNow cold-starts. Acceptable here, and
@@ -324,6 +324,34 @@ no interview is imminent.
 
 Screenshot the firing alert and the dashboard mid-outage. Those two images are
 the README's evidence that this works.
+
+### Fire drill evidence (run 31 Aug 2026)
+
+The check target was pointed at a non-existent path; the alert went
+Pending after the first failed probes and Firing once the 5-minute pending
+period elapsed, roughly eight minutes after the edit.
+
+The dashboard mid-outage — site down, database still fine. The two failure
+domains separate exactly as designed, and the HTTPS Status panel shows the
+404 band: a server answering with the wrong answer, not silence.
+
+![Dashboard during the simulated outage](dashboard_outage.webp)
+
+The alert email, and the resolved notification after the target was reverted:
+
+![Firing alert email](alert_firing.jpg)
+
+![Resolved notification](alert_resolved.png)
+
+One unplanned finding from the drill era: the first thing this monitoring
+setup ever alerted on was itself. The body assertion was saved with inverted
+polarity — *fail if the body matches* — so every healthy probe failed the
+check while the site was fine. The execution log stated it plainly
+(`level=ERROR msg="Body matched regular expression"`), and the same
+polarity mistake surfaced a second time in the alert rule's condition
+(`IS ABOVE 0` on a metric that is 1 when healthy), caught by previewing the
+rule before saving. Both are now part of the checklist: read the assertion
+semantics, and never save an alert without previewing its current state.
 
 ---
 

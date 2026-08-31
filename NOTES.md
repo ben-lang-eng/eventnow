@@ -43,10 +43,14 @@ curl rather than a source-code read.
 
 ---
 
-## Monitoring, evening 1 — outside-in
+## Monitoring, evening 1 — outside-in (completed 31 Aug 2026)
 
-Built: `/healthz/` and `/readyz/` in Django; Grafana Cloud synthetic checks,
-`eventnow-overview` dashboard, `eventnow-down` alert, fire drill.
+Built: `/healthz/` and `/readyz/` in Django; Grafana Cloud synthetic checks
+(`eventnow-healthz` 2 min / `eventnow-readyz` 30 min), `eventnow-overview`
+dashboard (6 panels), `eventnow-down` alert (email, 5-min pending period).
+Fire drill run and passed: firing email at ~8 min, resolved email after
+revert. Evidence in `monitoring/`. cron-job.org keep-alive retired — the
+2-minute probe keeps Render warm now.
 
 **Hardest decision.**
 The handover specified one `/health/` endpoint including a database `SELECT 1`,
@@ -73,6 +77,21 @@ the right trade; for something with users it would not be.
 - A pending period is not a detail. Without one, every transient blip pages you
   and you stop reading your own alerts.
 - An alert nobody has watched fire is a hypothesis.
+- **The first thing my monitoring ever alerted on was itself.** The body
+  assertion went in with inverted polarity ("fail if the body matches"), so
+  every healthy probe failed while the site was fine — visible only because I
+  read the probe's execution log instead of guessing. The same polarity trap
+  appeared again an hour later in the alert condition (`IS ABOVE 0` on a
+  metric that is 1 when healthy), caught by the rule preview showing *Firing*
+  on a healthy site. Twice in one evening: assertion direction is where
+  monitoring bugs live, and previews/logs are how you catch them.
+- Grafana's unit setting labels data, it does not convert it. A
+  `probe_duration_seconds` panel set to "milliseconds" happily rendered
+  0.5 s as 0.5 ms. Sanity-check panels against a number you already know.
+- Every label combination is its own time series. Editing a check mints a new
+  `config_version` label and splits the graph; `max by (probe) (...)` is the
+  fix, and the reason the check page counts "active series" against the 10k
+  free budget.
 
 > _My version, in my words:_
 
