@@ -22,7 +22,7 @@ for — the two facts that mattered during the 2026-08 Groq incident.
 import os
 
 from django.db import connection
-from django.http import JsonResponse
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_GET
 
@@ -163,3 +163,29 @@ def readyz(request):
         "llm_config": _llm_config_check(),
     })
     return JsonResponse(payload, status=status)
+
+
+@require_GET
+def status_dashboard(request):
+    """Redirect to the public Grafana dashboard for this deployment.
+
+    Grafana Cloud cannot be iframed (embedding is Enterprise-only), so the
+    closest thing to "the dashboard on the site" is a stable local URL that
+    302s to the externally shared dashboard. The target lives in the
+    STATUS_DASHBOARD_URL env var: the share link never enters the repo, and
+    rotating or revoking it is a dashboard edit, not a redeploy — the same
+    pattern as LLM_MODEL.
+
+    Args:
+        request: The HttpRequest.
+
+    Returns:
+        HttpResponseRedirect: 302 to the shared dashboard.
+
+    Raises:
+        Http404: When STATUS_DASHBOARD_URL is not configured.
+    """
+    url = os.environ.get("STATUS_DASHBOARD_URL")
+    if not url:
+        raise Http404
+    return HttpResponseRedirect(url)

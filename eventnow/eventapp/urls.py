@@ -36,6 +36,7 @@ urlpatterns = [
     # Operational probes (polled by Grafana Synthetic Monitoring)
     path("healthz/", health.healthz, name="healthz"),
     path("readyz/", health.readyz, name="readyz"),
+    path("status/", health.status_dashboard, name="status_dashboard"),
     # Static legal pages
     path("privacy/", views.privacy, name="privacy"),
     path("terms/", views.terms, name="terms"),

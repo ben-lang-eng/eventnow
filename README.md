@@ -109,7 +109,7 @@ Static files are served by WhiteNoise middleware with `WHITENOISE_USE_FINDERS = 
 
 ## Monitoring
 
-The live deployment is watched from outside by [Grafana Cloud](https://grafana.com/products/cloud/) synthetic monitoring, with email alerting on outage. Full runbook, dashboard queries and the free-tier arithmetic behind the design: [`monitoring/README.md`](monitoring/README.md).
+The live deployment is watched from outside by [Grafana Cloud](https://grafana.com/products/cloud/) synthetic monitoring, with email alerting on outage. The dashboard is public: **[/status/](https://eventnow-kq6z.onrender.com/status/)** redirects to a live, read-only view of it. Full runbook, dashboard queries and the free-tier arithmetic behind the design: [`monitoring/README.md`](monitoring/README.md).
 
 The app exposes two probes, split along the Kubernetes liveness/readiness line:
 

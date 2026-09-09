@@ -393,3 +393,18 @@ class HealthEndpointTests(TestCase):
         # there first. Either way the probes are read-only.
         for url in ("/healthz/", "/readyz/"):
             self.assertIn(self.client.post(url).status_code, (403, 405))
+
+
+class StatusDashboardTests(TestCase):
+    """/status/ — the public link to the Grafana dashboard."""
+
+    def test_redirects_to_configured_dashboard(self):
+        url = "https://example.grafana.net/public-dashboards/abc123"
+        with patch.dict("os.environ", {"STATUS_DASHBOARD_URL": url}):
+            response = self.client.get("/status/")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], url)
+
+    def test_404_when_unconfigured(self):
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertEqual(self.client.get("/status/").status_code, 404)
