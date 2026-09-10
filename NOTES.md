@@ -106,6 +106,28 @@ the right trade; for something with users it would not be.
 
 ---
 
+## Side quest, 2026-09-09 — public /status/ page
+
+The `eventnow-overview` dashboard is now public: Grafana's "share externally"
+feature gives an unguessable read-only URL, and `/status/` on the site 302s
+to it (footer link included). Two decisions worth keeping:
+
+- **Redirect, not embed.** Grafana Cloud blocks iframe embedding (Enterprise
+  and self-hosted only), so a redirect from a memorable URL is the closest
+  thing to "the dashboard on the site" — and arguably better: no layout
+  hacks, and the viewer gets the real dashboard.
+- **The share URL is an env var** (`STATUS_DASHBOARD_URL`), not a hardcoded
+  link. Rotating or revoking the share link is a Render dashboard edit, not
+  a redeploy — the same pattern as `LLM_MODEL`, for the same reason. Unset,
+  the route 404s politely, so deploy order never matters.
+
+Also confirmed in passing: the built-in `$__range` variable works on shared
+dashboards (the "no variables" limitation is about dashboard *template*
+variables), and a portfolio site that publishes its own error rate is a
+feature, not a risk.
+
+---
+
 ## Monitoring, evening 2 — inside-out
 
 _To fill in after V2._
