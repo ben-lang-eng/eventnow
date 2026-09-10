@@ -1,5 +1,7 @@
 # EventNow
 
+[![Tests](https://github.com/ben-lang-eng/eventnow/actions/workflows/tests.yml/badge.svg)](https://github.com/ben-lang-eng/eventnow/actions/workflows/tests.yml)
+
 A multi-tenant event-management platform built as a university web-systems capstone (UQ INFS7202) and kept live afterwards as a portfolio piece.
 
 Organisers create and run events with scheduled sessions; attendees register, receive capacity-aware confirmations, and track upcoming events on a personal calendar.
