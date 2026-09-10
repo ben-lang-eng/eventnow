@@ -408,3 +408,71 @@ class StatusDashboardTests(TestCase):
     def test_404_when_unconfigured(self):
         with patch.dict("os.environ", {}, clear=True):
             self.assertEqual(self.client.get("/status/").status_code, 404)
+
+
+class TelemetrySetupTests(TestCase):
+    """telemetry.setup_telemetry must be inert without configuration."""
+
+    def test_noop_when_endpoint_unset(self):
+        from eventnow import telemetry
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertFalse(telemetry.setup_telemetry())
+
+
+class AiPolishMetricsTests(TestCase):
+    """The hand-rolled metrics in ai.py.
+
+    A real (in-memory) meter provider is installed once for the test
+    process; the instruments created at ai.py import time are proxies that
+    attach to it, which is exactly how production wiring works too.
+    """
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        from opentelemetry import metrics
+        from opentelemetry.sdk.metrics import MeterProvider
+        from opentelemetry.sdk.metrics.export import InMemoryMetricReader
+
+        cls.reader = InMemoryMetricReader()
+        metrics.set_meter_provider(MeterProvider(metric_readers=[cls.reader]))
+
+    def _counter_points(self):
+        data = self.reader.get_metrics_data()
+        points = {}
+        for rm in data.resource_metrics or []:
+            for sm in rm.scope_metrics:
+                for metric in sm.metrics:
+                    if metric.name == "polish_requests":
+                        for pt in metric.data.data_points:
+                            points[frozenset(pt.attributes.items())] = pt.value
+        return points
+
+    def test_success_records_outcome_and_returns_text(self):
+        from types import SimpleNamespace
+        from eventapp.ai import polish_event_description
+
+        def fake_llm(_input):
+            return SimpleNamespace(content="  Polished copy.  ")
+
+        with patch("eventapp.ai.ChatOpenAI", return_value=fake_llm):
+            result = polish_event_description("a rough draft", "Title")
+
+        self.assertEqual(result, "Polished copy.")
+        self.assertEqual(
+            self._counter_points().get(frozenset({("outcome", "success")})), 1)
+
+    def test_error_records_exception_class_and_still_raises(self):
+        from eventapp.ai import polish_event_description
+
+        def fake_llm(_input):
+            raise TimeoutError("llm timed out")
+
+        # Recording a failure must never replace raising it: the view's
+        # error handling depends on the exception propagating.
+        with patch("eventapp.ai.ChatOpenAI", return_value=fake_llm):
+            with self.assertRaises(TimeoutError):
+                polish_event_description("a rough draft")
+
+        key = frozenset({("outcome", "error"), ("error_type", "TimeoutError")})
+        self.assertEqual(self._counter_points().get(key), 1)

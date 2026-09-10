@@ -4,9 +4,33 @@ Wraps a LangChain pipeline (prompt | ChatOpenAI) used by the
 "Polish with AI" feature on the event and session forms.
 """
 import os
+import time
 
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
+from opentelemetry import metrics
+
+# Instruments come from the global meter provider. Until telemetry.py has
+# installed a real provider these are no-ops (the OTel API's proxy meter),
+# so recording below is always safe — with or without a Grafana account.
+#
+# Names follow the OTel-to-Prometheus translation: a counter named
+# "polish_requests" lands in Grafana as polish_requests_total, and a
+# histogram named "polish_latency" with unit "s" as polish_latency_seconds.
+_meter = metrics.get_meter("eventnow.ai")
+_polish_requests = _meter.create_counter(
+    "polish_requests",
+    description='"Polish with AI" requests, by outcome and error type.',
+)
+# Default histogram buckets are tuned for milliseconds; LLM round trips are
+# 0.5-10 s, so without these bounds every sample lands in one bucket and
+# histogram_quantile() has nothing to interpolate with.
+_polish_latency = _meter.create_histogram(
+    "polish_latency",
+    unit="s",
+    description="Latency of successful LLM polish calls.",
+    explicit_bucket_boundaries_advisory=[0.25, 0.5, 1, 2, 4, 8, 15, 30],
+)
 
 
 def polish_event_description(rough_text: str, event_title: str = "") -> str:
@@ -60,7 +84,24 @@ def polish_event_description(rough_text: str, event_title: str = "") -> str:
 
     # Compose prompt + model into a runnable chain, then invoke with the
     # template variables. response.content holds the model's text reply.
+    #
+    # The metrics encode the 2026-08 Groq lesson: outcome and exception
+    # class as labels (a bounded set — never raw messages or user data),
+    # so a retired model shows up as error_type="NotFoundError" within one
+    # export interval. The exception itself still propagates; recording a
+    # failure must never replace raising it.
     chain = prompt | llm
-    response = chain.invoke(
-        {"title": event_title or "(no title)", "rough": rough_text})
+    start = time.perf_counter()
+    try:
+        response = chain.invoke(
+            {"title": event_title or "(no title)", "rough": rough_text})
+    except Exception as exc:
+        _polish_requests.add(
+            1, {"outcome": "error", "error_type": type(exc).__name__})
+        raise
+    # Latency is recorded for successes only: the histogram answers "how
+    # slow is a working polish?", while failure modes (timeouts included)
+    # are the counter's job.
+    _polish_latency.record(time.perf_counter() - start)
+    _polish_requests.add(1, {"outcome": "success"})
     return response.content.strip()
