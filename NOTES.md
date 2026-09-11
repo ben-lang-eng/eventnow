@@ -128,14 +128,66 @@ feature, not a risk.
 
 ---
 
-## Monitoring, evening 2 — inside-out
+## Monitoring, evening 2 — inside-out (completed 11 Sep 2026)
 
-_To fill in after V2._
+Built: OpenTelemetry in Django (`telemetry.py`, env-gated, OTLP push every
+60 s — pull has nothing to scrape on a free Render dyno); auto-instrumented
+RED metrics with the probes excluded; hand-instrumented `polish_requests`
+counter (`outcome`, `error_type`) and `polish_latency` histogram with
+LLM-scale buckets; RED + Polish dashboard rows; `eventnow-polish-error-rate`
+alert. Plus, along the way: GitHub Actions CI with README badge, and the
+public dashboard at `/status/`. Groq re-enactment run: the retired model was
+put back on purpose, `error_type="NotFoundError"` hit the dashboard within a
+minute, firing email at ~10 minutes. Evidence in `monitoring/`.
 
 **Hardest decision.**
+Where "broken" gets measured. The HTTP error-rate panel stayed at "No data"
+through a 100% Polish outage, because the view catches the exception and
+returns a friendly 200 — correct UX, and exactly why the August incident was
+invisible to every status-code-based check. The auto-instrumented RED layer
+measures the protocol; only the two hand-written metrics in `ai.py` know
+what failure means for the feature. Breadth from auto-instrumentation,
+meaning from manual — you always need both, and deciding what deserves
+manual instrumentation is the actual design work.
 
-**What I learned.** (candidates: push vs. pull for OTel on a PaaS with no
-sidecar; cardinality — why `error_type` is a safe label and `user_id` is not;
-why the probes must be excluded from the RED metrics)
+> _My version, in my words:_
+
+**What I learned.**
+- Push vs. pull is dictated by the platform, and each fails differently:
+  pull notices silence, push makes silence ambiguous. The V1 synthetic
+  probes are the backstop for exactly the failure mode the push model
+  cannot see about itself.
+- Cardinality is the metrics cost model. Every label combination is a
+  billable series; `error_type` (exception class names, a closed set) is a
+  safe label, a user id or raw error message is not.
+- Histogram buckets are a design decision: the SDK defaults are tuned for
+  millisecond web requests, and 0.5–10 s LLM calls all land in one bucket
+  without explicit bounds — `histogram_quantile()` then has nothing to
+  interpolate with.
+- **My alert resolved four minutes before the fix deployed, and I can
+  explain why.** The errors were a burst that stopped when I stopped
+  clicking; with a `[10m]` rate window and a 10 m pending period, the rule
+  fired at the exact moment its evidence started ageing out, and resolved
+  one evaluation later. A resolved notification means "the condition
+  stopped being true", not "the problem is fixed". Real outages sustain
+  themselves through real traffic; drills are bursts.
+- Saved is not applied, part three: the NoData→Normal setting had to be
+  checked on the rule's detail page after saving, and the first attempt
+  hadn't stuck. Read back the applied state, always.
+- Counters live in process memory. A restart drops the series — `rate()`
+  survives counter resets, but a vanished series is No data, not zero. On a
+  single-instance push setup, every deploy interrupts your evidence.
+- The deploy log confirmed `WEB_CONCURRENCY=1`: the single-worker assumption
+  the whole metric pipeline quietly relied on was true, but it was an
+  assumption until read from the log.
+
+> _My version, in my words:_
 
 **What I would do differently.**
+- Match the drill to the failure it simulates: clicking Polish on a loop for
+  15 minutes would have reproduced a real outage's sustained signal instead
+  of a burst, and the alert would have stayed firing until the actual fix.
+- Pending period and rate window are one design decision, not two knobs —
+  choosing them equal is what made fire-then-instant-resolve possible.
+
+> _My version, in my words:_**

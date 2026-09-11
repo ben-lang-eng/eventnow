@@ -355,25 +355,137 @@ semantics, and never save an alert without previewing its current state.
 
 ---
 
-## Evening 2 — V2, from the inside
+## Evening 2 — inside-out (completed 11 Sep 2026)
 
-Planned, not yet built:
+The app now reports its own metrics. Definition of done was a Polish click on
+the live site visible on the dashboard within about a minute — met, and then
+some: the re-enactment below shows the original incident being detected in
+real time.
 
-1. `opentelemetry-instrumentation-django` plus the OTLP HTTP exporter,
-   configured entirely through the `OTEL_*` env vars already stubbed in
-   `.env.example`. No endpoint set means no telemetry — the app must still run
-   locally without a Grafana account.
-2. RED metrics (Rate, Errors, Duration) for every view, auto-instrumented.
-   Exclude the probes via `OTEL_PYTHON_DJANGO_EXCLUDED_URLS=healthz,readyz`, or
-   the 2-minute liveness check dominates the request rate.
-3. Hand-instrument `ai.py`:
-   - `polish_requests_total` — counter, labels `outcome` (`success` / `error`)
-     and `error_type`
-   - `polish_latency_seconds` — histogram
-   The August incident would have appeared as `error_type="NotFoundError"`
-   climbing to 100% within a minute of the first failed click.
-4. Extend `eventnow-overview` with a RED row and a Polish row.
-5. Alert `eventnow-polish-error-rate`: error ratio above 50% over 10 minutes.
+### What was built
 
-Definition of done: one Polish click on the live site shows up on the dashboard
-within about a minute.
+- **`eventnow/eventnow/telemetry.py`** — env-gated OpenTelemetry setup,
+  called from `wsgi.py` before the WSGI handler is built (the Django
+  auto-instrumentation inserts its middleware into `settings.MIDDLEWARE`, so
+  it must run first). With no `OTEL_EXPORTER_OTLP_ENDPOINT` set the module
+  does nothing: local dev needs no Grafana account, and telemetry failures
+  cost data, never uptime — verified by running the app against a
+  black-holed exporter.
+- **Push, not pull.** Metrics aggregate in-process and are POSTed to Grafana
+  Cloud's OTLP gateway every 60 s. Render's free tier gives one dyno and no
+  sidecars — there is nothing for a Prometheus server to scrape, so the app
+  pushes. The trade: with pull, the scraper notices when you stop answering;
+  with push, silence is ambiguous. The V1 synthetic probes cover exactly
+  that blind spot, which is why both halves exist.
+- **RED metrics auto-instrumented** for every view via
+  `opentelemetry-instrumentation-django`, with the probes excluded
+  (`OTEL_PYTHON_DJANGO_EXCLUDED_URLS=healthz,readyz`, defaulted in code) so
+  the 2-minute liveness check does not become the majority of "traffic".
+- **Hand-instrumented `ai.py`**: `polish_requests` counter (labels
+  `outcome` and `error_type` — the exception class name, a bounded set;
+  labels must never carry user data or raw messages, every combination is a
+  billable time series) and `polish_latency` histogram with LLM-scale
+  buckets (0.25–30 s; the SDK defaults are millisecond-tuned and would dump
+  every sample into one bucket). The OTLP-to-Prometheus translation appends
+  the suffixes: they land as `polish_requests_total` and
+  `polish_latency_seconds_*`.
+- One stroke of luck verified from the deploy log: Render sets
+  `WEB_CONCURRENCY=1`, so gunicorn runs a single worker and the
+  multi-process metric-collision problem does not exist here. First question
+  to ask when this pattern meets a real multi-worker deployment.
+
+### The dashboard rows
+
+**RED — application** (all with `job="eventnow"`):
+
+```promql
+# Request rate, per route
+sum by (http_route) (rate(http_server_request_duration_seconds_count{job="eventnow"}[5m]))
+
+# Error rate (5xx only — a 404 is a bored visitor, not a broken app)
+100 * sum(rate(http_server_request_duration_seconds_count{job="eventnow", http_response_status_code=~"5.."}[5m]))
+    / sum(rate(http_server_request_duration_seconds_count{job="eventnow"}[5m]))
+
+# p95 duration — histogram_quantile on a real histogram this time
+histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{job="eventnow"}[5m])))
+```
+
+**Polish with AI**:
+
+```promql
+# Calls by outcome (increase, not rate — polish clicks are rare events)
+sum by (outcome, error_type) (increase(polish_requests_total[1h]))
+
+# Error ratio
+100 * sum(rate(polish_requests_total{outcome="error"}[10m]))
+    / sum(rate(polish_requests_total[10m]))
+
+# p95 latency of successful polishes
+histogram_quantile(0.95, sum by (le) (rate(polish_latency_seconds_bucket[10m])))
+```
+
+### Alert: `eventnow-polish-error-rate`
+
+Error ratio above 50%, evaluated every minute, pending period 10 minutes —
+single failures are weather; a sustained majority failing is the August
+signature. One setting V1 did not need: **"if no data → Normal"**. The
+ratio is 0/0 whenever nobody has clicked Polish for 10 minutes, which on a
+portfolio site is most of the time, and the default would page about an
+idle feature. (The setting was configured, saved, and then found still at
+its default on the rule's detail page — the third "verify the applied
+state, not the saved form" incident of this project.)
+
+### The re-enactment (11 Sep 2026)
+
+The point of the whole project, performed deliberately: `LLM_MODEL` was set
+back to `llama-3.3-70b-versatile` — the model whose retirement caused the
+original incident — and Polish was clicked a few times on the live site.
+
+Within one export interval the dashboard showed
+`error_type="NotFoundError"` climbing and the error ratio at 100%. The rule
+went Pending at 17:28, Firing at 17:38:30, email at 17:39:
+
+![Alert rules list with the polish error-rate alert firing](v2_alerts_firing_list.png)
+
+![Firing email](v2_alert_firing.png)
+
+**The most important panel during the outage was the one that stayed
+empty.** The HTTP error-rate panel showed "No data" throughout, because the
+view catches the LLM exception and returns a friendly 200 — at the HTTP
+layer nothing was failing. That is precisely why the real August incident
+was invisible to any status-code-based check, and why the two
+hand-instrumented metrics exist: auto-instrumentation gives breadth, but
+only code that knows what "broken" means for a feature can report it.
+
+### Why the alert resolved before the fix deployed
+
+The resolved email arrived at 17:41 — but the revert build only went live
+at ~17:46 (deploy log below). The alert did not resolve because Polish
+recovered; it resolved because the *evidence expired*:
+
+![Resolved email, two minutes after firing](v2_alert_resolved.png)
+
+![Deploy log: the fix went live minutes after the alert had already resolved](v2_deploy_log.png)
+
+The error clicks happened around 17:25–17:28 and then stopped. The
+condition is a ratio over a trailing `[10m]` window, and the pending period
+is also 10 minutes — so the rule fired at the exact moment the errors began
+ageing out of the window, and resolved one evaluation later when the window
+forgot them. A burst that ends produces fire-then-instant-resolve whenever
+pending period ≈ rate window.
+
+Two operational lessons out of that:
+
+- **A drill's traffic shape differs from a real outage's.** Real users keep
+  clicking, every failure refreshes the window, and the alert stays firing.
+  A burst followed by silence looks, to a trailing-window ratio, like
+  recovery. Ratio alerts monitor failing *activity*, not broken *state*.
+- **A resolved notification means "the condition stopped being true", not
+  "the problem is fixed".** Here the fix arrived five minutes after the
+  resolution it did not cause.
+
+### Budget check
+
+Active series after V2: a few hundred of the 10k free — RED histogram
+buckets × routes × methods, plus a handful of polish series. Comfortable,
+with room for the `sensor-*` project.

@@ -135,7 +135,7 @@ Neither probe ever calls the LLM — that would cost money and rate limit on eve
 
 `status` distinguishes `ok` from `degraded` (misconfigured, but still serving) and `error` (a hard dependency is unreachable, HTTP 503). The synthetic check asserts on the response body as well as the status code, because the incident that prompted this work — a provider retiring the configured model — left the site returning a perfectly healthy 200 on every page.
 
-*Planned (V2): OpenTelemetry instrumentation pushing RED metrics and per-request `polish_requests_total` / `polish_latency_seconds` to the same stack.*
+The app also reports its own metrics: OpenTelemetry pushes RED metrics for every view plus feature-level `polish_requests_total` / `polish_latency_seconds` counters to the same stack, so an LLM-provider failure shows up labelled by exception class within a minute — while returning a polite HTTP 200 to the user. The incident that motivated all of this was re-enacted on purpose, detected, and alerted on; the write-up is in the [monitoring README](monitoring/README.md).
 
 ## References
 
